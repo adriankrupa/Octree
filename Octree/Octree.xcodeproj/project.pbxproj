@@ -1,0 +1,286 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AB3CA784D6A7594A9A81DEB6 /* gtest-all.cc in Sources */ = {isa = PBXBuildFile; fileRef = AB3CAEBB96D5D8CCB337DDB5 /* gtest-all.cc */; };
+		AB3CAC31CCE1E1FE7C9C6BD5 /* tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AB3CA5894C1826D978DF2B03 /* tests.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3A5596541B6A78B2008871A4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		3A5596561B6A78B2008871A4 /* Octree */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Octree; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB3CA1A3160FE609B95A5A1D /* Octree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Octree.h; path = ../../Octree.h; sourceTree = "<group>"; };
+		AB3CA4CD92A65FC9965030C8 /* gtest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gtest.h; sourceTree = "<group>"; };
+		AB3CA5894C1826D978DF2B03 /* tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = tests.cpp; path = ../../tests.cpp; sourceTree = "<group>"; };
+		AB3CAEBB96D5D8CCB337DDB5 /* gtest-all.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "gtest-all.cc"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3A5596531B6A78B2008871A4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3A55964D1B6A78B2008871A4 = {
+			isa = PBXGroup;
+			children = (
+				3A5596581B6A78B2008871A4 /* Octree */,
+				3A5596571B6A78B2008871A4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3A5596571B6A78B2008871A4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3A5596561B6A78B2008871A4 /* Octree */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3A5596581B6A78B2008871A4 /* Octree */ = {
+			isa = PBXGroup;
+			children = (
+				AB3CA1A3160FE609B95A5A1D /* Octree.h */,
+				AB3CA5894C1826D978DF2B03 /* tests.cpp */,
+				AB3CAFA90E09FBF533258CBE /* gtest */,
+			);
+			path = Octree;
+			sourceTree = "<group>";
+		};
+		AB3CAFA90E09FBF533258CBE /* gtest */ = {
+			isa = PBXGroup;
+			children = (
+				AB3CA4CD92A65FC9965030C8 /* gtest.h */,
+				AB3CAEBB96D5D8CCB337DDB5 /* gtest-all.cc */,
+			);
+			name = gtest;
+			path = ../../gtest;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3A5596551B6A78B2008871A4 /* Octree */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3A55965D1B6A78B2008871A4 /* Build configuration list for PBXNativeTarget "Octree" */;
+			buildPhases = (
+				3A5596521B6A78B2008871A4 /* Sources */,
+				3A5596531B6A78B2008871A4 /* Frameworks */,
+				3A5596541B6A78B2008871A4 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Octree;
+			productName = Octree;
+			productReference = 3A5596561B6A78B2008871A4 /* Octree */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3A55964E1B6A78B2008871A4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0640;
+				ORGANIZATIONNAME = "Adrian Krupa";
+				TargetAttributes = {
+					3A5596551B6A78B2008871A4 = {
+						CreatedOnToolsVersion = 6.4;
+					};
+				};
+			};
+			buildConfigurationList = 3A5596511B6A78B2008871A4 /* Build configuration list for PBXProject "Octree" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 3A55964D1B6A78B2008871A4;
+			productRefGroup = 3A5596571B6A78B2008871A4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3A5596551B6A78B2008871A4 /* Octree */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3A5596521B6A78B2008871A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB3CAC31CCE1E1FE7C9C6BD5 /* tests.cpp in Sources */,
+				AB3CA784D6A7594A9A81DEB6 /* gtest-all.cc in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		3A55965B1B6A78B2008871A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/include/,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "../**";
+			};
+			name = Debug;
+		};
+		3A55965C1B6A78B2008871A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/include/,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = "../**";
+			};
+			name = Release;
+		};
+		3A55965E1B6A78B2008871A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "POINTS=1000000";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"./**",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "../**";
+			};
+			name = Debug;
+		};
+		3A55965F1B6A78B2008871A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "POINTS=1000000";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"./**",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "../**";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3A5596511B6A78B2008871A4 /* Build configuration list for PBXProject "Octree" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3A55965B1B6A78B2008871A4 /* Debug */,
+				3A55965C1B6A78B2008871A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3A55965D1B6A78B2008871A4 /* Build configuration list for PBXNativeTarget "Octree" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3A55965E1B6A78B2008871A4 /* Debug */,
+				3A55965F1B6A78B2008871A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3A55964E1B6A78B2008871A4 /* Project object */;
+}
