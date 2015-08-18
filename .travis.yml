@@ -13,5 +13,6 @@ addons:
     - gcc-4.8
     - g++-4.8
     - clang
+    - glm
 
 script: make clear test run POINTS=10000
