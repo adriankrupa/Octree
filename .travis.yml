@@ -1,0 +1,6 @@
+language: cpp
+
+compiler:
+  - gcc
+
+script: make clear test run POINTS=10000
