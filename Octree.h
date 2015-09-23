@@ -32,6 +32,414 @@
 #include <condition_variable>
 #include <stack>
 #include <queue>
+#include <type_traits>
+#include <memory>
+
+namespace AKOctree2 {
+
+#define OctreeTemplate template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
+
+    template<class LeafDataType, class NodeDataType, class Precision>
+    class Octree;
+
+    template<class LeafDataType, class NodeDataType, class Precision>
+    class OctreeCell;
+
+    template<class LeafDataType, class NodeDataType, class Precision>
+    class OctreeBranch;
+
+    template<class LeafDataType, class NodeDataType, class Precision>
+    class OctreeLeaf;
+
+#pragma mark Simple math structs
+
+    template<class Precision = float>
+    struct OctreeVec3 {
+        static_assert( std::is_arithmetic<Precision>::value, "Precision must be arithmetic!");
+        Precision x = Precision(0);
+        Precision y = Precision(0);
+        Precision z = Precision(0);
+
+        OctreeVec3() : x(0), y(0), z(0) {}
+        OctreeVec3(Precision x) : x(x), y(x), z(x) {}
+        OctreeVec3(Precision x, Precision y, Precision z) : x(x), y(y), z(z) {}
+
+        OctreeVec3& operator+=(const OctreeVec3& rhs) {
+            x += rhs.x;
+            y += rhs.y;
+            z += rhs.z;
+            return *this;
+        }
+
+        OctreeVec3& operator-=(const OctreeVec3& rhs) {
+            x -= rhs.x;
+            y -= rhs.y;
+            z -= rhs.z;
+            return *this;
+        }
+
+        friend OctreeVec3 operator+(OctreeVec3 lhs, const OctreeVec3& rhs) {
+            lhs += rhs;
+            return lhs;
+        }
+
+        friend OctreeVec3 operator-(OctreeVec3 lhs, const OctreeVec3& rhs) {
+            lhs -= rhs;
+            return lhs;
+        }
+    };
+
+    template<class Precision = float>
+    struct OctreeVec4 {
+        static_assert( std::is_arithmetic<Precision>::value, "Precision must be arithmetic!");
+        Precision x = Precision(0);
+        Precision y = Precision(0);
+        Precision z = Precision(0);
+        Precision w = Precision(0);
+
+        OctreeVec4() : x(0), y(0), z(0), w(0) {}
+        OctreeVec4(Precision x) : x(x), y(x), z(x), w(x) {}
+        OctreeVec4(Precision x, Precision y, Precision z, Precision w) : x(x), y(y), z(z), w(w) {}
+
+        OctreeVec4& operator+=(const OctreeVec4& rhs) {
+            x += rhs.x;
+            y += rhs.y;
+            z += rhs.z;
+            return *this;
+        }
+
+        OctreeVec4& operator-=(const OctreeVec4& rhs) {
+            x -= rhs.x;
+            y -= rhs.y;
+            z -= rhs.z;
+            return *this;
+        }
+
+        friend OctreeVec4 operator+(OctreeVec4 lhs, const OctreeVec4& rhs) {
+            lhs += rhs;
+            return lhs;
+        }
+
+        friend OctreeVec4 operator-(OctreeVec4 lhs, const OctreeVec4& rhs) {
+            lhs -= rhs;
+            return lhs;
+        }
+    };
+
+#pragma mark OctreeAgent base classes
+
+    OctreeTemplate
+    class OctreeAgent {
+    public:
+        virtual ~OctreeAgent() {}
+        virtual bool isItemOverlappingCell(const LeafDataType *item,
+                                           const OctreeVec3<Precision> &cellCenter,
+                                           const Precision &cellRadius) const = 0;
+    protected:
+        OctreeAgent() {}
+    };
+
+    OctreeTemplate
+    class OctreeAgentAutoAdjustExtension {
+    public:
+        virtual ~OctreeAgentAutoAdjustExtension() {}
+        virtual OctreeVec3<Precision> GetMaxValuesForAutoAdjust(const LeafDataType *item,
+                                                    const OctreeVec3<Precision> &max) const = 0;
+
+        virtual OctreeVec3<Precision> GetMinValuesForAutoAdjust(const LeafDataType *item,
+                                                    const OctreeVec3<Precision> &min) const = 0;
+    protected:
+        OctreeAgentAutoAdjustExtension() {}
+    };
+
+#pragma mark Octree cells classes
+
+    OctreeTemplate
+    class OctreeCell {
+
+        typedef Octree<LeafDataType, NodeDataType, Precision> OctreeLNP;
+        typedef OctreeCell<LeafDataType, NodeDataType, Precision> OctreeCellLNP;
+        typedef OctreeAgent<LeafDataType, NodeDataType, Precision> OctreeAgentLNP;
+        //typedef OctreeVisitor<LeafDataType, NodeDataType, Precision> OctreeVisitorLNP;
+
+    public:
+        virtual ~OctreeCell() {}
+        void insert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) { doInsert(pThis, item, agent); }
+        bool getItemPath(const LeafDataType *item, std::string &path) const { return doGetItemPath(item, path); }
+        void printTreeAndSubtree(unsigned int level) { doPrintTreeAndSubtree(level); }
+
+    protected:
+        OctreeCell(OctreeLNP*           octree,
+                   OctreeVec3<Precision>center,
+                   Precision            radius) : baseOctree(octree),
+                                                  center(center),
+                                                  radius(radius) {}
+
+        virtual bool equal_to(OctreeCellLNP const &other) const = 0;
+        virtual void doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) = 0;
+        virtual bool doGetItemPath(const LeafDataType *item, std::string &path) const = 0;
+        virtual void doPrintTreeAndSubtree(unsigned int level) const = 0;
+
+        OctreeLNP *baseOctree;
+
+        OctreeVec3<Precision> center = OctreeVec3<Precision>();
+        Precision radius = 0.0f;
+        mutable NodeDataType branchData;
+    };
+
+    OctreeTemplate
+    class OctreeBranch : public OctreeCell<LeafDataType, NodeDataType, Precision> {
+        typedef Octree<LeafDataType, NodeDataType, Precision> OctreeLNP;
+        typedef OctreeCell<LeafDataType, NodeDataType, Precision> OctreeCellLNP;
+        typedef OctreeBranch<LeafDataType, NodeDataType, Precision> OctreeBranchLNP;
+        typedef OctreeLeaf<LeafDataType, NodeDataType, Precision> OctreeLeafLNP;
+        typedef OctreeAgent<LeafDataType, NodeDataType, Precision> OctreeAgentLNP;
+        //typedef OctreeVisitor<LeafDataType, NodeDataType> OctreeVisitorLN;
+
+    public:
+        OctreeBranch(OctreeLNP *octree,
+                     OctreeVec3<Precision> center,
+                     Precision radius,
+                     const std::vector<const LeafDataType *> &items,
+                     const LeafDataType *item,
+                     const OctreeAgentLNP &agent) : OctreeCellLNP(octree, center, radius) {
+
+            std::shared_ptr<OctreeCellLNP> notUsedPointer;
+            float halfRadius = radius / 2.0f;
+            for (int i = 0; i < 8; ++i) {
+
+                bool up = i < 4;//+y
+                bool right = (i & 1) == 1;//+x
+                bool front = ((i >> 1) & 1) != 0; //+z
+                OctreeVec3<Precision> newCenter = this->center + OctreeVec3<Precision>(right ? halfRadius : -halfRadius,
+                                                               up ? halfRadius : -halfRadius,
+                                                               front ? halfRadius : -halfRadius);
+
+                childs[i] = std::make_shared<OctreeLeafLNP>(this->baseOctree, newCenter, halfRadius);
+            }
+
+            for (int i = 0; i < items.size(); ++i) {
+                this->insert(notUsedPointer, items[i], agent);
+            }
+            this->insert(notUsedPointer, item, agent);
+        }
+
+    protected:
+        virtual bool equal_to(OctreeCellLNP const &other) const override {
+            return false;
+        }
+
+        virtual void doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) override {
+            //std::cout << "insert into branch" << std::endl;
+            Precision halfRadius = this->radius / Precision(2);
+            for (int i = 0; i < 8; ++i) {
+                bool up = i < 4;//+y
+                bool right = (i & 1) == 1;//+x
+                bool front = ((i >> 1) & 1) != 0; //+z
+                OctreeVec3<Precision> newCenter = this->center + OctreeVec3<Precision>(right ? halfRadius : -halfRadius,
+                                                               up ? halfRadius : -halfRadius,
+                                                               front ? halfRadius : -halfRadius);
+                if (agent.isItemOverlappingCell(item, newCenter, halfRadius)) {
+                    childs[i]->insert(childs[i], item, agent);
+                    break;
+                }
+            }
+
+        };
+
+        virtual bool doGetItemPath(const LeafDataType *item, std::string &path) const override {
+            for (int i = 0; i < 8; ++i) {
+                path += std::to_string(i);
+                if (childs[i]->getItemPath(item, path)) {
+                    return true;
+                } else {
+                    path.pop_back();
+                }
+            }
+            return false;
+        }
+
+        virtual void doPrintTreeAndSubtree(unsigned int level) const override {
+            printf("Branch ");
+            for (int i = 0; i < 8; ++i) {
+                if (i != 0) {
+                    for (int j = 0; j < level + 1; ++j) {
+                        printf("       ");
+                    }
+                    for (int j = 0; j < level; ++j) {
+                        printf("  ");
+                    }
+                }
+                printf("%d ", i);
+                if (childs[i] == nullptr) {
+                    printf("NULL\n");
+                } else {
+                    childs[i]->printTreeAndSubtree(level + 1);
+                }
+
+            }
+        }
+
+    private:
+        std::shared_ptr<OctreeCell<LeafDataType, NodeDataType>> childs[8];
+    };
+
+    OctreeTemplate
+    class OctreeLeaf : public OctreeCell<LeafDataType, NodeDataType, Precision> {
+
+        typedef Octree<LeafDataType, NodeDataType, Precision> OctreeLNP;
+        typedef OctreeCell<LeafDataType, NodeDataType, Precision> OctreeCellLNP;
+        typedef OctreeBranch<LeafDataType, NodeDataType, Precision> OctreeBranchLNP;
+        typedef OctreeLeaf<LeafDataType, NodeDataType, Precision> OctreeLeafLNP;
+        typedef OctreeAgent<LeafDataType, NodeDataType, Precision> OctreeAgentLNP;
+        //typedef OctreeVisitor<LeafDataType, NodeDataType> OctreeVisitorLN;
+
+    public:
+
+        OctreeLeaf(OctreeLNP *octree, OctreeVec3<Precision> center, Precision radius)
+                : OctreeCellLNP(octree, center, radius) {
+            //std::cout << "Create leaf" << std::endl;
+        }
+
+        virtual ~OctreeLeaf() {
+            //std::cout << "Delete leaf" << std::endl;
+        }
+
+    protected:
+        virtual bool equal_to(OctreeCellLNP const &other) const override {
+            return false;
+        }
+
+        virtual void doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) override {
+            for (int i = 0; i < data.size(); ++i) {
+                if (data[i] == item) {
+                    return;
+                }
+            }
+            if (this->baseOctree->getMaxItemsPerCell() <= data.size()) {
+                auto cell = std::make_shared<OctreeBranchLNP>(this->baseOctree, this->center, this->radius, data, item, agent);
+                pThis = cell;
+            } else {
+                //std::cout << "Insert into leaf" << std::endl;
+                data.push_back(item);
+            }
+        }
+
+        virtual bool doGetItemPath(const LeafDataType *item, std::string &path) const override {
+            for (auto &it : data) {
+                if (it == item) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        virtual void doPrintTreeAndSubtree(unsigned int level) const override {
+            printf("Leaf, items:%lu ", data.size());
+            for (unsigned int i = 0; i < data.size(); ++i) {
+                printf("%llu ", (unsigned long long) data[i]);
+            }
+            printf("\n");
+        }
+
+    private:
+        std::vector<const LeafDataType *> data;
+    };
+
+    OctreeTemplate
+    class Octree {
+        static_assert( std::is_arithmetic<Precision>::value, "Precision must be arithmetic!");
+
+        OctreeVec3<Precision> center = OctreeVec3<Precision>();
+        Precision radius = Precision(10);
+
+        unsigned int maxItemsPerCell = 1;
+        unsigned int itemsCount = 0;
+
+        unsigned int threadsNumber = 1;
+
+        std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision>> root;
+
+    public:
+        Octree(unsigned int maxItemsPerCell,
+               unsigned int threadsNumber = 1) : maxItemsPerCell(maxItemsPerCell),
+                                                 threadsNumber(threadsNumber) {
+
+            assert(radius > Precision(0));
+            //std::cout << "Creating octree" << std::endl;
+            root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
+        }
+
+        Octree(unsigned int             maxItemsPerCell,
+               OctreeVec3<Precision>    center,
+               Precision                radius,
+               unsigned int             threadsNumber = 1) : maxItemsPerCell(maxItemsPerCell),
+                                                             center(center),
+                                                             radius(radius),
+                                                             threadsNumber(threadsNumber) {
+
+            assert(radius > Precision(0));
+
+            //std::cout << "Creating octree" << std::endl;
+            root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
+        }
+
+        unsigned int getMaxItemsPerCell() const noexcept {
+            return maxItemsPerCell;
+        }
+
+        void clear() {
+            root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
+            itemsCount = 0;
+        }
+
+        void insert(const LeafDataType *item, const OctreeAgent<LeafDataType, NodeDataType, Precision> &agent) {
+
+            if (agent.isItemOverlappingCell(item, center, radius)) {
+                root->insert(root, item, agent);
+                itemsCount++;
+            }
+        }
+
+        void insert(const LeafDataType *items,
+                    const unsigned int itemsCount,
+                    const OctreeAgent<LeafDataType, NodeDataType, Precision> &agent,
+                    const bool autoAdjustTree) {
+
+        }
+
+        void insert(const LeafDataType *items,
+                    const unsigned int itemsCount,
+                    const OctreeAgent<LeafDataType, NodeDataType, Precision> &agent) {
+
+            if(itemsCount == 0 && dynamic_cast<OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision>>(agent) != nullptr) {
+                insert(items, itemsCount, true);
+            } else {
+                insert(items, itemsCount, false);
+            }
+
+        }
+
+
+        ~Octree() {
+            //std::cout << "Deleting octree" << std::endl;
+        }
+
+        std::string getItemPath(LeafDataType *item) {
+            std::string v;
+
+            root->getItemPath(item, v);
+
+            return v;
+        }
+
+        void printTree() const {
+            root->printTreeAndSubtree(0);
+        }
+    };
+
+#undef OctreeTemplate
+}
 
 namespace AKOctree {
 
@@ -793,6 +1201,7 @@ namespace AKOctree {
         }
         return true;
     }
+
 }
 
 #endif /* defined(__AKOctree__Octree__) */

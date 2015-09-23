@@ -6,26 +6,32 @@
 #include "gtest/gtest.h"
 #include "Octree.h"
 
-using namespace AKOctree;
+using namespace AKOctree2;
 
 struct Point {
-  glm::dvec3 position;
-  double mass;
+  glm::vec3 position;
+  float mass;
 };
+
+unsigned int points = POINTS;
+Point testPoint;
+
 
 class OctreePointAgent : public OctreeAgent<Point> {
 
 public:
-  virtual bool isItemOverlappingCell(const Point* item, const glm::vec3& center, const float& radius) const override {
+    virtual bool isItemOverlappingCell(const Point *item,
+                                       const OctreeVec3<float> &cellCenter,
+                                       const float &cellRadius) const {
 
-    if (glm::abs(item->position.x - center.x) > radius ||
-        glm::abs(item->position.y - center.y) > radius ||
-        glm::abs(item->position.z - center.z) > radius) {
-          return false;
+    if (glm::abs(item->position.x - cellCenter.x) > cellRadius ||
+        glm::abs(item->position.y - cellCenter.y) > cellRadius ||
+        glm::abs(item->position.z - cellCenter.z) > cellRadius) {
+            return false;
     }
-    return true;
+        return true;
   }
-
+/*
     virtual glm::vec3 GetMaxValuesForAutoAdjust(const Point *item, const glm::vec3 &max) const override {
         return glm::vec3(glm::max((float)item->position.x, max.x), glm::max((float)item->position.y, max.y), glm::max((float)item->position.z, max.z));
     }
@@ -33,11 +39,10 @@ public:
     virtual glm::vec3 GetMinValuesForAutoAdjust(const Point *item, const glm::vec3 &min) const override {
         return glm::vec3(glm::min((float)item->position.x, min.x), glm::min((float)item->position.y, min.y), glm::min((float)item->position.z, min.z));
     }
-
+*/
 };
+/*
 
-unsigned int points = POINTS;
-Point testPoint;
 
 class OctreePointVisitor : public OctreeVisitor<Point> {
 public:
@@ -94,12 +99,12 @@ public:
         }
     }
 };
-
+*/
 class OctreeTests : public ::testing::Test {
 
   protected:
-    Octree<Point> *o;
-    Octree<Point> *o2;
+    Octree<Point, Point> *o;
+    //Octree<Point> *o2;
 
     virtual void SetUp() {
         Test::SetUp();
@@ -111,7 +116,7 @@ class OctreeTests : public ::testing::Test {
         delete o;
     }
 };
-
+/*
 
 TEST_F (OctreeTests, GenerateData) {
     o = new Octree<Point, Point>(8, 0, 0, glm::vec3(0), 100, 0);
@@ -134,41 +139,32 @@ TEST_F (OctreeTests, GenerateData) {
     outputFile.close();
     delete p;
 }
-
+*/
 
 TEST_F (OctreeTests, OctreeDefaultConstructor) {
-  o = new Octree<Point, Point>(4, 0, 0);
+  o = new Octree<Point, Point>(4);
   ASSERT_NE(o, nullptr);
 }
 
 TEST_F (OctreeTests, OctreMaxItemsPerCellGetter) {
-  o = new Octree<Point, Point>(4, 0, 0);
-  ASSERT_EQ(4, o->GetMaxItemsPerCell());
-}
-
-TEST_F (OctreeTests, OctreMaxLevelCountGetter) {
-  o = new Octree<Point, Point>(4, 2, 1);
-  ASSERT_EQ(2, o->GetMaxLevelCount());
-}
-
-TEST_F (OctreeTests, OctreMaxCellSizeGetter) {
-  o = new Octree<Point, Point>(4, 2, 1);
-  ASSERT_FLOAT_EQ(1, o->GetMaxCellSize());
+  o = new Octree<Point, Point>(4);
+  ASSERT_EQ(4, o->getMaxItemsPerCell());
 }
 
 TEST_F (OctreeTests, SingleInsertTest) {
-    o = new Octree<Point, Point>(4, 0, 0);
+    o = new Octree<Point, Point>(4);
     OctreePointAgent agent;
     Point *p = new Point[1];
     p[0].position = glm::vec3(1,1,1);
     o->insert(&p[0], agent);
-    ASSERT_EQ("", o->GetItemPath(&p[0]));
+    ASSERT_EQ("", o->getItemPath(&p[0]));
 
     delete p;
 }
 
+
 TEST_F (OctreeTests, Insert5Points) {
-    o = new Octree<Point, Point>(4, 0, 0);
+    o = new Octree<Point, Point>(4);
     OctreePointAgent agent;
     Point *p = new Point[5];
     p[0].position = glm::vec3(1,1,1);
@@ -181,17 +177,17 @@ TEST_F (OctreeTests, Insert5Points) {
     o->insert(&p[2], agent);
     o->insert(&p[3], agent);
     o->insert(&p[4], agent);
-    ASSERT_EQ("344", o->GetItemPath(&p[0]));
-    ASSERT_EQ("344", o->GetItemPath(&p[1]));
-    ASSERT_EQ("345", o->GetItemPath(&p[2]));
-    ASSERT_EQ("345", o->GetItemPath(&p[3]));
-    ASSERT_EQ("345", o->GetItemPath(&p[4]));
+    ASSERT_EQ("344", o->getItemPath(&p[0]));
+    ASSERT_EQ("344", o->getItemPath(&p[1]));
+    ASSERT_EQ("345", o->getItemPath(&p[2]));
+    ASSERT_EQ("345", o->getItemPath(&p[3]));
+    ASSERT_EQ("345", o->getItemPath(&p[4]));
 
     delete p;
 }
 
 TEST_F (OctreeTests, Insert5PointsReverse) {
-    o = new Octree<Point, Point>(4, 0, 0);
+    o = new Octree<Point, Point>(4);
     OctreePointAgent agent;
     Point *p = new Point[5];
     p[0].position = glm::vec3(1,1,1);
@@ -204,17 +200,17 @@ TEST_F (OctreeTests, Insert5PointsReverse) {
     o->insert(&p[2], agent);
     o->insert(&p[1], agent);
     o->insert(&p[0], agent);
-    ASSERT_EQ("344", o->GetItemPath(&p[0]));
-    ASSERT_EQ("344", o->GetItemPath(&p[1]));
-    ASSERT_EQ("345", o->GetItemPath(&p[2]));
-    ASSERT_EQ("345", o->GetItemPath(&p[3]));
-    ASSERT_EQ("345", o->GetItemPath(&p[4]));
+    ASSERT_EQ("344", o->getItemPath(&p[0]));
+    ASSERT_EQ("344", o->getItemPath(&p[1]));
+    ASSERT_EQ("345", o->getItemPath(&p[2]));
+    ASSERT_EQ("345", o->getItemPath(&p[3]));
+    ASSERT_EQ("345", o->getItemPath(&p[4]));
 
     delete p;
 }
 
 TEST_F (OctreeTests, Insert5PointsSingleValuesInLeaves) {
-    o = new Octree<Point, Point>(1, 0, 0);
+    o = new Octree<Point, Point>(1);
     OctreePointAgent agent;
     Point *p = new Point[5];
     p[0].position = glm::vec3(1,1,1);
@@ -227,15 +223,15 @@ TEST_F (OctreeTests, Insert5PointsSingleValuesInLeaves) {
     o->insert(&p[2], agent);
     o->insert(&p[3], agent);
     o->insert(&p[4], agent);
-    ASSERT_EQ("3444", o->GetItemPath(&p[0]));
-    ASSERT_EQ("3445", o->GetItemPath(&p[1]));
-    ASSERT_EQ("3454", o->GetItemPath(&p[2]));
-    ASSERT_EQ("34552", o->GetItemPath(&p[3]));
-    ASSERT_EQ("34553", o->GetItemPath(&p[4]));
+    ASSERT_EQ("3444", o->getItemPath(&p[0]));
+    ASSERT_EQ("3445", o->getItemPath(&p[1]));
+    ASSERT_EQ("3454", o->getItemPath(&p[2]));
+    ASSERT_EQ("34552", o->getItemPath(&p[3]));
+    ASSERT_EQ("34553", o->getItemPath(&p[4]));
 
     delete p;
 }
-
+/*
 TEST_F (OctreeTests, Insert5PointsAtOnce) {
     o = new Octree<Point, Point>(1, 0, 0);
     OctreePointAgent agent;
@@ -967,6 +963,7 @@ TEST_F (OctreeTests, PerformanceDenseVisitAdjustTests) {
 
     delete p;
 }
+*/
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

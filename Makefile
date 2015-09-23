@@ -1,7 +1,7 @@
 CXX ?= clang++
 
 INCLUDES = -I .
-CXXFLAGS = -std=c++11 -O3 -ffast-math -pthread
+CXXFLAGS = -std=c++11 -ffast-math -pthread -Wall -g
 
 test: tests.o gtest-all.o
 	$(CXX) $(CXXFLAGS) tests.o gtest-all.o -o Octree.out
