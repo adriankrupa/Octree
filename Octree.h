@@ -335,7 +335,7 @@ namespace AKOctree2 {
         }
 
         virtual void doPrintTreeAndSubtree(unsigned int level) const override {
-            printf("Leaf, items:%lx ", data.size());
+            printf("Leaf, items:%lu ", data.size());
             for (unsigned int i = 0; i < data.size(); ++i) {
                 printf("%llu ", (unsigned long long) data[i]);
             }
