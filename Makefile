@@ -1,4 +1,4 @@
-CXX ?= clang++
+CXX ?= g++-4.9
 
 INCLUDES = -I .
 CXXFLAGS = -std=c++11 -ffast-math -pthread -Wall -g -Wno-unknown-pragmas

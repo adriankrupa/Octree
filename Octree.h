@@ -218,7 +218,7 @@ namespace AKOctree2 {
                 childs[i] = std::make_shared<OctreeLeafLNP>(this->baseOctree, newCenter, halfRadius);
             }
 
-            for (int i = 0; i < items.size(); ++i) {
+            for (unsigned int i = 0; i < items.size(); ++i) {
                 this->insert(notUsedPointer, items[i], agent);
             }
             this->insert(notUsedPointer, item, agent);
@@ -263,10 +263,10 @@ namespace AKOctree2 {
             printf("Branch ");
             for (int i = 0; i < 8; ++i) {
                 if (i != 0) {
-                    for (int j = 0; j < level + 1; ++j) {
+                    for (unsigned int j = 0; j < level + 1; ++j) {
                         printf("       ");
                     }
-                    for (int j = 0; j < level; ++j) {
+                    for (unsigned int j = 0; j < level; ++j) {
                         printf("  ");
                     }
                 }
@@ -311,7 +311,7 @@ namespace AKOctree2 {
         }
 
         virtual void doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) override {
-            for (int i = 0; i < data.size(); ++i) {
+            for (unsigned int i = 0; i < data.size(); ++i) {
                 if (data[i] == item) {
                     return;
                 }
@@ -335,7 +335,7 @@ namespace AKOctree2 {
         }
 
         virtual void doPrintTreeAndSubtree(unsigned int level) const override {
-            printf("Leaf, items:%lu ", data.size());
+            printf("Leaf, items:%lx ", data.size());
             for (unsigned int i = 0; i < data.size(); ++i) {
                 printf("%llu ", (unsigned long long) data[i]);
             }
