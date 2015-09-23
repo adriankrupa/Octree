@@ -183,7 +183,7 @@ TEST_F (OctreeTests, Insert5Points) {
     ASSERT_EQ("345", o->getItemPath(&p[3]));
     ASSERT_EQ("345", o->getItemPath(&p[4]));
 
-    delete p;
+    delete []p;
 }
 
 TEST_F (OctreeTests, Insert5PointsReverse) {
@@ -206,7 +206,7 @@ TEST_F (OctreeTests, Insert5PointsReverse) {
     ASSERT_EQ("345", o->getItemPath(&p[3]));
     ASSERT_EQ("345", o->getItemPath(&p[4]));
 
-    delete p;
+    delete []p;
 }
 
 TEST_F (OctreeTests, Insert5PointsSingleValuesInLeaves) {
@@ -229,7 +229,7 @@ TEST_F (OctreeTests, Insert5PointsSingleValuesInLeaves) {
     ASSERT_EQ("34552", o->getItemPath(&p[3]));
     ASSERT_EQ("34553", o->getItemPath(&p[4]));
 
-    delete p;
+    delete []p;
 }
 /*
 TEST_F (OctreeTests, Insert5PointsAtOnce) {
