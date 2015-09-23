@@ -159,7 +159,7 @@ TEST_F (OctreeTests, SingleInsertTest) {
     o->insert(&p[0], agent);
     ASSERT_EQ("", o->getItemPath(&p[0]));
 
-    delete p;
+    delete []p;
 }
 
 
