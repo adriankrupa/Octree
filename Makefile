@@ -1,5 +1,5 @@
 CXX ?= g++-4.9
-
+POINTS ?= 100
 INCLUDES = -I .
 CXXFLAGS = -std=c++11 -ffast-math -pthread -Wall -g -Wno-unknown-pragmas
 
@@ -14,6 +14,9 @@ gtest-all.o: gtest/gtest-all.cc
 
 run:
 	./Octree.out
+
+valgrind:
+	valgrind --leak-check=full --track-origins=yes --dsymutil=yes ./Octree.out
 
 clear:
 	rm -rf Octree.out tests.o gtest-all.o
