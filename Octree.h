@@ -216,6 +216,7 @@ namespace AKOctree2 {
         unsigned int forceCountItems() const { return doForceCountItems(); }
         void visit(const OctreeVisitorLNP &visitor) const { doVisit(visitor); }
         bool isLeaf() const { return doIsLeaf(); }
+        bool insertInThread(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) { return doInsertInThread(pThis, item, agent); }
 
         void moveCell(OctreeVec3<Precision> center, Precision radius) {
             this->center = center;
@@ -248,6 +249,7 @@ namespace AKOctree2 {
         virtual void doVisit(const OctreeVisitorLNP &visitor) const = 0;
         virtual bool equal_to(OctreeCellLNP const &other) const = 0;
         virtual bool doIsLeaf() const = 0;
+        virtual bool doInsertInThread(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) = 0;
 
         OctreeLNP *baseOctree;
 
@@ -379,6 +381,23 @@ namespace AKOctree2 {
             return true;
         }
 
+        virtual bool doInsertInThread(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) override {
+            Precision halfRadius = this->radius / Precision(2);
+            for (int i = 0; i < 8; ++i) {
+                bool up = i < 4;//+y
+                bool right = (i & 1) == 1;//+x
+                bool front = ((i >> 1) & 1) != 0; //+z
+                OctreeVec3<Precision> newCenter = this->center + OctreeVec3<Precision>(right ? halfRadius : -halfRadius,
+                                                               up ? halfRadius : -halfRadius,
+                                                               front ? halfRadius : -halfRadius);
+                if (agent->isItemOverlappingCell(item, newCenter, halfRadius)) {
+                    while (!childs[i]->insertInThread(childs[i], item, agent));
+                    break;
+                }
+            }
+            return true;
+        }
+
     private:
         std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8];
     };
@@ -460,9 +479,9 @@ namespace AKOctree2 {
             if (data.size() != p->data.size()) {
                 return false;
             }
-            for (int i = 0; i < data.size(); ++i) {
+            for (unsigned int i = 0; i < data.size(); ++i) {
                 bool found = false;
-                for (int j = 0; j < data.size(); ++j) {
+                for (unsigned int j = 0; j < data.size(); ++j) {
                     if (data[i] == p->data[j]) {
                         found = true;
                         break;
@@ -476,8 +495,22 @@ namespace AKOctree2 {
             return true;
         }
 
+        virtual bool doInsertInThread(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) override {
+            if (!leafMutex.try_lock()) {
+                return false;
+            }
+            if (this->baseOctree->getMaxItemsPerCell() <= data.size()) {
+                pThis = std::make_shared<OctreeBranchLNP>(this->baseOctree, this->center, this->radius, data, item, agent);
+            } else {
+                data.push_back(item);
+                leafMutex.unlock();
+            }
+            return true;
+        }
+
     private:
         std::vector<const LeafDataType *> data;
+        std::mutex leafMutex;
     };
 
     OctreeTemplate
@@ -491,8 +524,11 @@ namespace AKOctree2 {
         unsigned int itemsCount = 0;
 
         unsigned int threadsNumber = 1;
+        mutable std::mutex threadsMutex;
 
         std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision>> root;
+        std::vector<const LeafDataType *> itemsToAdd;
+        mutable std::vector<std::thread> threads;
 
     public:
         Octree(unsigned int maxItemsPerCell,
@@ -601,7 +637,20 @@ namespace AKOctree2 {
             }
 
             if (threadsNumber != 1) {
-                assert(false);
+                itemsToAdd.reserve(itemsCount);
+                for (int i = 0; i < itemsCount; ++i) {
+                    itemsToAdd.push_back(&items[i]);
+                }
+                if (threadsNumber == 0) {
+                    threadsNumber = std::thread::hardware_concurrency();
+                }
+                for (int i = 0; i < threadsNumber; ++i) {
+                    threads.push_back(std::thread(&Octree::insertThread, this, agentInsert));
+                }
+                for (int i = 0; i < threadsNumber; ++i) {
+                    threads[i].join();
+                }
+                threads.clear();
             } else {
                 for (unsigned int i = 0; i < itemsCount; ++i) {
                     if (agentInsert->isItemOverlappingCell(&items[i], center, radius)) {
@@ -667,9 +716,23 @@ namespace AKOctree2 {
             }
 
             if (threadsNumber != 1) {
-                assert(false);
-            } else {
+                itemsToAdd.reserve(items.size());
                 for (int i = 0; i < items.size(); ++i) {
+                    itemsToAdd.push_back(&items[i]);
+                }
+                if (threadsNumber == 0) {
+                    threadsNumber = std::thread::hardware_concurrency();
+                }
+                threads.clear();
+                for (int i = 0; i < threadsNumber; ++i) {
+                    threads.push_back(std::thread(&Octree::insertThread, this, agentInsert));
+                }
+                for (int i = 0; i < threadsNumber; ++i) {
+                    threads[i].join();
+                }
+                threads.clear();
+            } else {
+                for (unsigned int i = 0; i < items.size(); ++i) {
                     if (agentInsert->isItemOverlappingCell(&items[i], center, radius)) {
                         if(root->insert(root, &items[i], agentInsert)) {
                             this->itemsCount++;
@@ -724,6 +787,38 @@ namespace AKOctree2 {
 
         bool operator==(const Octree<LeafDataType, NodeDataType, Precision> &rhs) {
             return *root.get() == *rhs.root.get();
+        }
+
+    private:
+        void insertThread(const OctreeAgent<LeafDataType> *agent) {
+            unsigned int itemsToBatch = std::max(threadsNumber, 1u) * 2;
+
+            while (!itemsToAdd.empty()) {
+                threadsMutex.lock();
+                if (itemsToAdd.empty()) {
+                    threadsMutex.unlock();
+                    break;
+                }
+                std::vector<const LeafDataType *> tempItems;
+                tempItems.reserve(itemsToBatch);
+                for (int i = 0; i < itemsToBatch; ++i) {
+                    if (itemsToAdd.empty()) {
+                        break;
+                    }
+                    auto item = itemsToAdd[itemsToAdd.size() - 1];
+                    tempItems.push_back(item);
+                    itemsToAdd.pop_back();
+                    this->itemsCount++;
+                }
+                threadsMutex.unlock();
+                for (int i = 0; i < tempItems.size(); ++i) {
+                    auto item = tempItems[i];
+                    if (agent->isItemOverlappingCell(item, center, radius)) {
+                        while (!root->insertInThread(root, item, agent));
+                    }
+                }
+            }
+
         }
     };
 
@@ -1185,7 +1280,6 @@ namespace AKOctree {
                         while (!root->insertInThread(root, item, agent));
                     }
                 }
-
             }
         }
 

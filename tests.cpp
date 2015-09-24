@@ -136,10 +136,9 @@ class OctreeTests : public ::testing::Test {
         delete o2;
     }
 };
-/*
+
 
 TEST_F (OctreeTests, GenerateData) {
-    o = new Octree<Point, Point>(8, 0, 0, glm::vec3(0), 100, 0);
     Point *p = new Point[points];
     std::fstream outputFile;
     outputFile.open("denseTest.txt", std::ios::out | std::ios::binary);
@@ -157,9 +156,9 @@ TEST_F (OctreeTests, GenerateData) {
     }
     outputFile.write((char *) p, points * sizeof(Point));
     outputFile.close();
-    delete p;
+    delete []p;
 }
-*/
+
 
 TEST_F (OctreeTests, OctreeDefaultConstructor) {
   o = new Octree<Point, Point>(4);
@@ -526,6 +525,67 @@ TEST_F (OctreeTests, SamePointInsertTest) {
 
     delete []p;
 }
+
+TEST_F (OctreeTests, Insert10PointsAtOnceWithThreads) {
+    o = new Octree<Point, Point>(4, 0);
+    o2 = new Octree<Point, Point>(4);
+    OctreePointAgent agent;
+    Point *p = new Point[10];
+    p[0].position = glm::vec3(1,1,1);
+    p[1].position = glm::vec3(2,1,1);
+    p[2].position = glm::vec3(3,1,1);
+    p[3].position = glm::vec3(4,1,1);
+    p[4].position = glm::vec3(5,1,1);
+    p[5].position = glm::vec3(6,1,1);
+    p[6].position = glm::vec3(7,1,1);
+    p[7].position = glm::vec3(8,1,1);
+    p[8].position = glm::vec3(9,1,1);
+    p[9].position = glm::vec3(10,1,1);
+    o->insert(p, 10, &agent);
+    o2->insert(p, 10, &agent);
+
+    ASSERT_TRUE(*o == *o2);
+    ASSERT_TRUE(o->getItemsCount() == o2->getItemsCount());
+    ASSERT_TRUE(o->forceGetItemsCount() == o2->forceGetItemsCount());
+
+    delete []p;
+}
+
+TEST_F (OctreeTests, Insert10PointsAtOnceWithThreadsWithVector) {
+    o = new Octree<Point, Point>(4, 0);
+    o2 = new Octree<Point, Point>(4);
+    OctreePointAgent agent;
+    std::vector<Point> points;
+    Point p;
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points[0].position = glm::vec3(1,1,1);
+    points[1].position = glm::vec3(2,1,1);
+    points[2].position = glm::vec3(3,1,1);
+    points[3].position = glm::vec3(4,1,1);
+    points[4].position = glm::vec3(5,1,1);
+    points[5].position = glm::vec3(6,1,1);
+    points[6].position = glm::vec3(7,1,1);
+    points[7].position = glm::vec3(8,1,1);
+    points[8].position = glm::vec3(9,1,1);
+    points[9].position = glm::vec3(10,1,1);
+
+    o->insert(points, &agent);
+    o2->insert(points, &agent);
+
+    ASSERT_TRUE(*o == *o2);
+    ASSERT_TRUE(o->getItemsCount() == o2->getItemsCount());
+    ASSERT_TRUE(o->forceGetItemsCount() == o2->forceGetItemsCount());
+}
+
 /*
 TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     o = new Octree<Point, Point>(1, 0, 0);
@@ -571,35 +631,10 @@ TEST_F (OctreeTests, TestVisit5PointsInThreads) {
 
     delete []p;
 }
-
-TEST_F (OctreeTests, Insert10PointsAtOnceWithThreads) {
-
-    o = new Octree<Point, Point>(4, 0, 0, 0);
-    o2 = new Octree<Point, Point>(4, 0, 0);
-    OctreePointAgent agent;
-    Point *p = new Point[10];
-    p[0].position = glm::vec3(1,1,1);
-    p[1].position = glm::vec3(2,1,1);
-    p[2].position = glm::vec3(3,1,1);
-    p[3].position = glm::vec3(4,1,1);
-    p[4].position = glm::vec3(5,1,1);
-    p[5].position = glm::vec3(6,1,1);
-    p[6].position = glm::vec3(7,1,1);
-    p[7].position = glm::vec3(8,1,1);
-    p[8].position = glm::vec3(9,1,1);
-    p[9].position = glm::vec3(10,1,1);
-    o->insert(p, 10, agent);
-    o2->insert(p, 10, agent);
-
-    ASSERT_TRUE(*o == *o2);
-    ASSERT_TRUE(o->ForceGetItemsCount() == o2->ForceGetItemsCount());
-
-    delete []p;
-}
-
+*/
 TEST_F (OctreeTests, PerformanceSparseInsertTests) {
-    o = new Octree<Point, Point>(8, 0, 0, glm::vec3(0), 100, 0);
-    o2 = new Octree<Point, Point>(8, 0, 0, glm::vec3(0), 100);
+    o = new Octree<Point, Point>(8, OctreeVec3<float>(0), 100, 0);
+    o2 = new Octree<Point, Point>(8, OctreeVec3<float>(0), 100);
 
     OctreePointAgent agent;
     Point *p = new Point[points];
@@ -611,24 +646,24 @@ TEST_F (OctreeTests, PerformanceSparseInsertTests) {
 
 
     auto start2 = std::chrono::steady_clock::now();
-    o2->insert(p, points, agent);
+    o2->insert(p, points, &agent);
     auto end2 = std::chrono::steady_clock::now();
     auto diff2 = end2 - start2;
     std::cout << "1 thread: " << std::chrono::duration<double, std::milli>(diff2).count() << " ms" << std::endl;
 
 
     auto start = std::chrono::steady_clock::now();
-    o->insert(p, points, agent);
+    o->insert(p, points, &agent);
     auto end = std::chrono::steady_clock::now();
     auto diff = end - start;
     std::cout << "All threads: " << std::chrono::duration<double, std::milli>(diff).count() << " ms" << std::endl;
 
-    ASSERT_EQ(o->GetItemsCount(), o2->GetItemsCount());
-    ASSERT_EQ(o->ForceGetItemsCount(), o2->ForceGetItemsCount());
+    ASSERT_EQ(o->getItemsCount(), o2->getItemsCount());
+    ASSERT_EQ(o->forceGetItemsCount(), o2->forceGetItemsCount());
     ASSERT_TRUE(*o == *o2);
     delete []p;
 }
-
+/*
 TEST_F (OctreeTests, PerformanceSparseInsertAdjustTests) {
     o = new Octree<Point, Point>(8, 0, 0, glm::vec3(0), 100, 0);
     o2 = new Octree<Point, Point>(8, 0, 0, glm::vec3(0), 100);
