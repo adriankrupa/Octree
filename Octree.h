@@ -83,6 +83,13 @@ namespace AKOctree2 {
             return lhs;
         }
 
+        friend OctreeVec3 operator/(OctreeVec3 lhs, const Precision& rhs) {
+            lhs.x /= rhs;
+            lhs.y /= rhs;
+            lhs.z /= rhs;
+            return lhs;
+        }
+
         friend OctreeVec3 operator-(OctreeVec3 lhs, const OctreeVec3& rhs) {
             lhs -= rhs;
             return lhs;
@@ -113,6 +120,14 @@ namespace AKOctree2 {
             y -= rhs.y;
             z -= rhs.z;
             return *this;
+        }
+
+        friend OctreeVec4 operator/(OctreeVec4 lhs, const Precision& rhs) {
+            lhs.x /= rhs;
+            lhs.y /= rhs;
+            lhs.z /= rhs;
+            lhs.w /= rhs;
+            return lhs;
         }
 
         friend OctreeVec4 operator+(OctreeVec4 lhs, const OctreeVec4& rhs) {
@@ -164,9 +179,15 @@ namespace AKOctree2 {
 
     public:
         virtual ~OctreeCell() {}
-        void insert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) { doInsert(pThis, item, agent); }
+        bool insert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) { return doInsert(pThis, item, agent); }
         bool getItemPath(const LeafDataType *item, std::string &path) const { return doGetItemPath(item, path); }
         void printTreeAndSubtree(unsigned int level) { doPrintTreeAndSubtree(level); }
+        unsigned int forceCountItems() const { return doForceCountItems(); }
+
+        void moveCell(OctreeVec3<Precision> center, Precision radius) {
+            this->center = center;
+            this->radius = radius;
+        }
 
     protected:
         OctreeCell(OctreeLNP*           octree,
@@ -176,9 +197,10 @@ namespace AKOctree2 {
                                                   radius(radius) {}
 
         virtual bool equal_to(OctreeCellLNP const &other) const = 0;
-        virtual void doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) = 0;
+        virtual bool doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) = 0;
         virtual bool doGetItemPath(const LeafDataType *item, std::string &path) const = 0;
         virtual void doPrintTreeAndSubtree(unsigned int level) const = 0;
+        virtual unsigned int doForceCountItems() const = 0;
 
         OctreeLNP *baseOctree;
 
@@ -202,7 +224,7 @@ namespace AKOctree2 {
                      Precision radius,
                      const std::vector<const LeafDataType *> &items,
                      const LeafDataType *item,
-                     const OctreeAgentLNP &agent) : OctreeCellLNP(octree, center, radius) {
+                     const OctreeAgentLNP *agent) : OctreeCellLNP(octree, center, radius) {
 
             std::shared_ptr<OctreeCellLNP> notUsedPointer;
             float halfRadius = radius / 2.0f;
@@ -229,7 +251,7 @@ namespace AKOctree2 {
             return false;
         }
 
-        virtual void doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) override {
+        virtual bool doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) override {
             //std::cout << "insert into branch" << std::endl;
             Precision halfRadius = this->radius / Precision(2);
             for (int i = 0; i < 8; ++i) {
@@ -239,13 +261,22 @@ namespace AKOctree2 {
                 OctreeVec3<Precision> newCenter = this->center + OctreeVec3<Precision>(right ? halfRadius : -halfRadius,
                                                                up ? halfRadius : -halfRadius,
                                                                front ? halfRadius : -halfRadius);
-                if (agent.isItemOverlappingCell(item, newCenter, halfRadius)) {
-                    childs[i]->insert(childs[i], item, agent);
-                    break;
+                if (agent->isItemOverlappingCell(item, newCenter, halfRadius)) {
+                    return childs[i]->insert(childs[i], item, agent);
                 }
             }
-
+            return false;
         };
+
+        virtual unsigned int doForceCountItems() const override {
+            unsigned int items = 0;
+
+            for (int i = 0; i < 8; ++i) {
+                items += childs[i]->forceCountItems();
+            }
+
+            return items;
+        }
 
         virtual bool doGetItemPath(const LeafDataType *item, std::string &path) const override {
             for (int i = 0; i < 8; ++i) {
@@ -310,10 +341,10 @@ namespace AKOctree2 {
             return false;
         }
 
-        virtual void doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP &agent) override {
+        virtual bool doInsert(std::shared_ptr<OctreeCellLNP> &pThis, const LeafDataType *item, const OctreeAgentLNP *agent) override {
             for (unsigned int i = 0; i < data.size(); ++i) {
                 if (data[i] == item) {
-                    return;
+                    return false;
                 }
             }
             if (this->baseOctree->getMaxItemsPerCell() <= data.size()) {
@@ -323,6 +354,7 @@ namespace AKOctree2 {
                 //std::cout << "Insert into leaf" << std::endl;
                 data.push_back(item);
             }
+            return true;
         }
 
         virtual bool doGetItemPath(const LeafDataType *item, std::string &path) const override {
@@ -332,6 +364,10 @@ namespace AKOctree2 {
                 }
             }
             return false;
+        }
+
+        virtual unsigned int doForceCountItems() const override {
+            return (unsigned int)data.size();
         }
 
         virtual void doPrintTreeAndSubtree(unsigned int level) const override {
@@ -365,7 +401,7 @@ namespace AKOctree2 {
                unsigned int threadsNumber = 1) : maxItemsPerCell(maxItemsPerCell),
                                                  threadsNumber(threadsNumber) {
 
-            assert(radius > Precision(0));
+            assert(radius > Precision(0) && "Assert has to be > 0");
             //std::cout << "Creating octree" << std::endl;
             root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
         }
@@ -373,12 +409,12 @@ namespace AKOctree2 {
         Octree(unsigned int             maxItemsPerCell,
                OctreeVec3<Precision>    center,
                Precision                radius,
-               unsigned int             threadsNumber = 1) : maxItemsPerCell(maxItemsPerCell),
-                                                             center(center),
+               unsigned int             threadsNumber = 1) : center(center),
                                                              radius(radius),
+                                                             maxItemsPerCell(maxItemsPerCell),
                                                              threadsNumber(threadsNumber) {
 
-            assert(radius > Precision(0));
+            assert(radius > Precision(0) && "Radius has to be > 0");
 
             //std::cout << "Creating octree" << std::endl;
             root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
@@ -388,35 +424,99 @@ namespace AKOctree2 {
             return maxItemsPerCell;
         }
 
+        unsigned int getItemsCount() const {
+            return itemsCount;
+        }
+
+        unsigned int forceGetItemsCount() const {
+            return root->forceCountItems();
+        }
+
         void clear() {
             root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
             itemsCount = 0;
         }
 
-        void insert(const LeafDataType *item, const OctreeAgent<LeafDataType, NodeDataType, Precision> &agent) {
+        void insert(const LeafDataType *item, const OctreeAgent<LeafDataType, NodeDataType, Precision> *agent) {
 
-            if (agent.isItemOverlappingCell(item, center, radius)) {
-                root->insert(root, item, agent);
-                itemsCount++;
+            if (agent->isItemOverlappingCell(item, center, radius)) {
+                if(root->insert(root, item, agent)) {
+                    itemsCount++;
+                }
             }
         }
 
         void insert(const LeafDataType *items,
                     const unsigned int itemsCount,
-                    const OctreeAgent<LeafDataType, NodeDataType, Precision> &agent,
-                    const bool autoAdjustTree) {
+                    const OctreeAgent<LeafDataType, NodeDataType, Precision> *agentInsert,
+                    const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision> *agentAdjust,
+                    bool autoAdjustTree = true) {
 
-        }
+            assert(itemsCount != 0);
+            assert(!autoAdjustTree || autoAdjustTree && agentAdjust != nullptr);
 
-        void insert(const LeafDataType *items,
-                    const unsigned int itemsCount,
-                    const OctreeAgent<LeafDataType, NodeDataType, Precision> &agent) {
+            if (autoAdjustTree) {
 
-            if(itemsCount == 0 && dynamic_cast<OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision>>(agent) != nullptr) {
-                insert(items, itemsCount, true);
+                OctreeVec3<Precision> max = center + radius;
+                OctreeVec3<Precision> min = center - radius;
+
+                for (int i = 0; i < itemsCount; ++i) {
+                    max = agentAdjust->GetMaxValuesForAutoAdjust(&items[i], max);
+                    min = agentAdjust->GetMinValuesForAutoAdjust(&items[i], min);
+                }
+                center = (max + min) / Precision(2);
+                radius = std::max(std::abs(center.x - max.x), std::abs(center.y - max.y));
+                radius = std::max(radius, glm::abs(center.z - max.z));
+                //printf("New center: (%lf, %lf, %lf), new radius: %lf\n", center.x, center.y, center.z, radius);
+                root->moveCell(center, radius);
+
+            }
+
+            if (threadsNumber != 1) {
+                assert(false);
             } else {
-                insert(items, itemsCount, false);
+                for (int i = 0; i < itemsCount; ++i) {
+                    if (agentInsert->isItemOverlappingCell(&items[i], center, radius)) {
+                        if(root->insert(root, &items[i], agentInsert)) {
+                            this->itemsCount++;
+                        }
+                    }
+                }
             }
+
+
+        }
+
+        template <class T>
+        void insert(const LeafDataType *items,
+                    const unsigned int itemsCount,
+                    const T *agent,
+                    bool autoAdjustTree) {
+
+
+            static_assert(std::is_base_of<OctreeAgent<LeafDataType, NodeDataType, Precision>, T>::value, "Agent has wrong class");
+
+            auto adj = dynamic_cast< const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision>* > (agent);
+            if(autoAdjustTree && adj == nullptr) {
+                printf("WARNING: To use auto adjust agent has to implement OctreeAgentAutoAdjustExtension\n");
+                insert(items, itemsCount, agent, nullptr, false);
+            } else {
+                insert(items, itemsCount, agent, adj, autoAdjustTree);
+            }
+
+        }
+
+        template <class T>
+        void insert(const LeafDataType *items,
+                    const unsigned int itemsCount,
+                    const T *agent) {
+
+
+            static_assert(std::is_base_of<OctreeAgent<LeafDataType, NodeDataType, Precision>, T>::value, "Agent has wrong class");
+
+            auto adj = dynamic_cast< const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision>* > (agent);
+            insert(items, itemsCount, agent, adj, adj != nullptr);
+
 
         }
 
