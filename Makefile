@@ -1,7 +1,7 @@
 CXX ?= g++-4.9
-POINTS ?= 100
+POINTS ?= 10000
 INCLUDES = -I .
-CXXFLAGS = $(CXXFLAGS) -std=c++11 -pthread -Wall -g -Wno-unknown-pragmas
+CXXFLAGS = -std=c++11 -stdlib=libc++ -pthread -Wall -g -Wno-unknown-pragmas
 
 test: tests.o gtest-all.o
 	$(CXX) $(CXXFLAGS) tests.o gtest-all.o -o Octree.out
