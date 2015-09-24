@@ -38,7 +38,14 @@ matrix:
 
     - os: linux
       compiler: clang
-      env: CXX=clang++ V='3.4'
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.4']
+          packages:
+            - ['clang-3.4']
+            - ['libglm-dev']
+      env: CXX=clang++-3.4
+      before_install: CXX=clang++-3.4
 
     - os: linux
       compiler: clang

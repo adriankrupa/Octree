@@ -390,6 +390,7 @@ namespace AKOctree2 {
                 OctreeVec3<Precision> newCenter = this->center + OctreeVec3<Precision>(right ? halfRadius : -halfRadius,
                                                                up ? halfRadius : -halfRadius,
                                                                front ? halfRadius : -halfRadius);
+
                 if (agent->isItemOverlappingCell(item, newCenter, halfRadius)) {
                     while (!childs[i]->insertInThread(childs[i], item, agent));
                     break;
