@@ -452,15 +452,12 @@ namespace AKOctree2 {
                     const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision> *agentAdjust,
                     bool autoAdjustTree = true) {
 
-            assert(itemsCount != 0);
-            assert(!autoAdjustTree || autoAdjustTree && agentAdjust != nullptr);
-
-            if (autoAdjustTree) {
+            if (autoAdjustTree && agentAdjust != nullptr && this->itemsCount == 0) {
 
                 OctreeVec3<Precision> max = center + radius;
                 OctreeVec3<Precision> min = center - radius;
 
-                for (int i = 0; i < itemsCount; ++i) {
+                for (unsigned int i = 0; i < itemsCount; ++i) {
                     max = agentAdjust->GetMaxValuesForAutoAdjust(&items[i], max);
                     min = agentAdjust->GetMinValuesForAutoAdjust(&items[i], min);
                 }
@@ -475,7 +472,7 @@ namespace AKOctree2 {
             if (threadsNumber != 1) {
                 assert(false);
             } else {
-                for (int i = 0; i < itemsCount; ++i) {
+                for (unsigned int i = 0; i < itemsCount; ++i) {
                     if (agentInsert->isItemOverlappingCell(&items[i], center, radius)) {
                         if(root->insert(root, &items[i], agentInsert)) {
                             this->itemsCount++;
@@ -511,15 +508,72 @@ namespace AKOctree2 {
                     const unsigned int itemsCount,
                     const T *agent) {
 
+            static_assert(std::is_base_of<OctreeAgent<LeafDataType, NodeDataType, Precision>, T>::value, "Agent has wrong class");
+            auto adj = dynamic_cast< const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision>* > (agent);
+            insert(items, itemsCount, agent, adj, adj != nullptr);
+        }
+
+        void insert(std::vector<LeafDataType> &items,
+                    const OctreeAgent<LeafDataType, NodeDataType, Precision> *agentInsert,
+                    const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision> *agentAdjust,
+                    bool autoAdjustTree = true) {
+
+            if (autoAdjustTree && agentAdjust != nullptr && this->itemsCount == 0) {
+
+                OctreeVec3<Precision> max = center + radius;
+                OctreeVec3<Precision> min = center - radius;
+
+                for (unsigned int i = 0; i < items.size(); ++i) {
+                    max = agentAdjust->GetMaxValuesForAutoAdjust(&items[i], max);
+                    min = agentAdjust->GetMinValuesForAutoAdjust(&items[i], min);
+                }
+                center = (max + min) / Precision(2);
+                radius = std::max(std::abs(center.x - max.x), std::abs(center.y - max.y));
+                radius = std::max(radius, glm::abs(center.z - max.z));
+                //printf("New center: (%lf, %lf, %lf), new radius: %lf\n", center.x, center.y, center.z, radius);
+                root->moveCell(center, radius);
+
+            }
+
+            if (threadsNumber != 1) {
+                assert(false);
+            } else {
+                for (int i = 0; i < items.size(); ++i) {
+                    if (agentInsert->isItemOverlappingCell(&items[i], center, radius)) {
+                        if(root->insert(root, &items[i], agentInsert)) {
+                            this->itemsCount++;
+                        }
+                    }
+                }
+            }
+        }
+
+        template <class T>
+        void insert(std::vector<LeafDataType> &items,
+                    const T *agent,
+                    bool autoAdjustTree) {
+
 
             static_assert(std::is_base_of<OctreeAgent<LeafDataType, NodeDataType, Precision>, T>::value, "Agent has wrong class");
 
             auto adj = dynamic_cast< const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision>* > (agent);
-            insert(items, itemsCount, agent, adj, adj != nullptr);
-
+            if(autoAdjustTree && adj == nullptr) {
+                printf("WARNING: To use auto adjust agent has to implement OctreeAgentAutoAdjustExtension\n");
+                insert(items, agent, nullptr, false);
+            } else {
+                insert(items, agent, adj, autoAdjustTree);
+            }
 
         }
 
+        template <class T>
+        void insert(std::vector<LeafDataType> &items,
+                    const T *agent) {
+
+            static_assert(std::is_base_of<OctreeAgent<LeafDataType, NodeDataType, Precision>, T>::value, "Agent has wrong class");
+            auto adj = dynamic_cast< const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision>* > (agent);
+            insert(items, agent, adj, adj != nullptr);
+        }
 
         ~Octree() {
             //std::cout << "Deleting octree" << std::endl;

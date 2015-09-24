@@ -320,9 +320,9 @@ TEST_F (OctreeTests, Insert5PointsAtOnceWithAdjust) {
 
     delete p;
 }
-/*
+
 TEST_F (OctreeTests, Insert5PointsAtOnceWithVector) {
-    o = new Octree<Point, Point>(1, 0, 0);
+    o = new Octree<Point, Point>(1);
     OctreePointAgent agent;
     std::vector<Point> points;
     Point p;
@@ -336,14 +336,14 @@ TEST_F (OctreeTests, Insert5PointsAtOnceWithVector) {
     points[2].position = glm::vec3(3,1,1);
     points[3].position = glm::vec3(4,1,1);
     points[4].position = glm::vec3(5,1,1);
-    o->insert(points, agent);
-    ASSERT_EQ("3444", o->GetItemPath(&points[0]));
-    ASSERT_EQ("3445", o->GetItemPath(&points[1]));
-    ASSERT_EQ("3454", o->GetItemPath(&points[2]));
-    ASSERT_EQ("34552", o->GetItemPath(&points[3]));
-    ASSERT_EQ("34553", o->GetItemPath(&points[4]));
+    o->insert(points, &agent);
+    ASSERT_EQ("3444", o->getItemPath(&points[0]));
+    ASSERT_EQ("3445", o->getItemPath(&points[1]));
+    ASSERT_EQ("3454", o->getItemPath(&points[2]));
+    ASSERT_EQ("34552", o->getItemPath(&points[3]));
+    ASSERT_EQ("34553", o->getItemPath(&points[4]));
 }
-
+/*
 TEST_F (OctreeTests, TestVisitSinglePoint) {
     o = new Octree<Point, Point>(1, 0, 0);
     OctreePointAgent agent;
