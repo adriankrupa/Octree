@@ -49,6 +49,7 @@ matrix:
             - ['clang-3.5']
             - ['libglm-dev']
       env: CXX=clang++-3.5
+      before_install: CXX=clang++-3.5
 
     - os: linux
       compiler: clang
@@ -59,6 +60,7 @@ matrix:
             - ['clang-3.6']
             - ['libglm-dev']
       env: CXX=clang++-3.6
+      before_install: CXX=clang++-3.6
 
     - os: linux
       compiler: clang
@@ -69,6 +71,7 @@ matrix:
             - ['clang-3.7']
             - ['libglm-dev']
       env: CXX=clang++-3.7
+      before_install: CXX=clang++-3.7
 
     - os: osx
       compiler: clang
@@ -85,18 +88,9 @@ matrix:
       before_install:
         - brew update
         - brew install glm
+        - CXX=clang++ V='Apple LLVM 7.0.0'
 
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages:
-            - ['g++-5']
-            - ['libglm-dev']
-      env:
-        - CXX=g++-5
-      after_success:
-        - coveralls --gcov gcov-5 --gcov-options '\-lp' --exclude unit_tests --exclude examples
+install:
+  - if [ "$CXX" == "clang++" ]; then export CXXFLAGS=" -stdlib=libc++ "; fi
 
 script: make clear test run POINTS=1000000
