@@ -536,6 +536,9 @@ namespace AKOctree2 {
                                                  threadsNumber(threadsNumber) {
 
             assert(radius > Precision(0) && "Assert has to be > 0");
+            if(threadsNumber == 0) {
+                this->threadsNumber = std::thread::hardware_concurrency();
+            }
             //std::cout << "Creating octree" << std::endl;
             root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
         }
@@ -549,7 +552,9 @@ namespace AKOctree2 {
                                                              threadsNumber(threadsNumber) {
 
             assert(radius > Precision(0) && "Radius has to be > 0");
-
+            if(threadsNumber == 0) {
+                this->threadsNumber = std::thread::hardware_concurrency();
+            }
             //std::cout << "Creating octree" << std::endl;
             root = std::make_shared<OctreeLeaf<LeafDataType, NodeDataType, Precision>>(this, center, radius);
         }
