@@ -90,7 +90,4 @@ matrix:
         - brew install glm
         - CXX=clang++ V='Apple LLVM 7.0.0'
 
-install:
-  - if [ "$CXX" == "clang++" ]; then export CXXFLAGS=" -stdlib=libc++ "; fi
-
 script: make clear test run POINTS=1000000
