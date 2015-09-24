@@ -633,6 +633,7 @@ TEST_F (OctreeTests, TestVisit5PointsInThreads) {
 }
 */
 TEST_F (OctreeTests, PerformanceSparseInsertTests) {
+    printf("Using %u threads\n", std::thread::hardware_concurrency());
     o = new Octree<Point, Point>(8, OctreeVec3<float>(0), 100, 0);
     o2 = new Octree<Point, Point>(8, OctreeVec3<float>(0), 100);
 
