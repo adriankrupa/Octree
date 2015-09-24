@@ -9,7 +9,7 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.8']
-      env: COMPILER=g++-4.8
+      env: CXX=g++-4.8
 
     - os: linux
       compiler: gcc
@@ -17,7 +17,7 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-4.9']
-      env: COMPILER=g++-4.9
+      env: CXX=g++-4.9
 
     - os: linux
       compiler: gcc
@@ -25,11 +25,11 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5']
-      env: COMPILER=g++-5
+      env: CXX=g++-5
 
     - os: linux
       compiler: clang
-      env: COMPILER=clang++ V='3.4'
+      env: CXX=clang++ V='3.4'
 
     - os: linux
       compiler: clang
@@ -37,7 +37,7 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5']
           packages: ['clang-3.5']
-      env: COMPILER=clang++-3.5
+      env: CXX=clang++-3.5
 
     - os: linux
       compiler: clang
@@ -45,7 +45,7 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.6']
           packages: ['clang-3.6']
-      env: COMPILER=clang++-3.6
+      env: CXX=clang++-3.6
 
     - os: linux
       compiler: clang
@@ -53,22 +53,22 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7']
           packages: ['clang-3.7']
-      env: COMPILER=clang++-3.7
+      env: CXX=clang++-3.7
 
     - os: osx
       compiler: clang
-      env: COMPILER=clang++ V='Apple LLVM 6.0' # Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn)
+      env: CXX=clang++ V='Apple LLVM 6.0' # Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn)
       before_install:
         - brew update
-        - brew outdated glm || brew upgrade glm
-        
+        - brew install glm
+
     - os: osx
       osx_image: xcode7
       compiler: clang
-      env: COMPILER=clang++ V='Apple LLVM 7.0.0' # Apple LLVM version 7.0.0 (clang-700.0.72)
+      env: CXX=clang++ V='Apple LLVM 7.0.0' # Apple LLVM version 7.0.0 (clang-700.0.72)
       before_install:
         - brew update
-        - brew outdated glm || brew upgrade glm
+        - brew install glm
 
     - os: linux
       compiler: gcc
@@ -77,7 +77,7 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-5']
       env:
-        - COMPILER=g++-5
+        - CXX=g++-5
       after_success:
         - coveralls --gcov gcov-5 --gcov-options '\-lp' --exclude unit_tests --exclude examples
 addons:
