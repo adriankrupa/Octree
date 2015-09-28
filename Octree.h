@@ -168,6 +168,14 @@ namespace AKOctree3 {
         OctreeAgentAutoAdjustExtension() {}
     };
 
+#pragma mark Octree NodeData Printer
+
+    OctreeTemplate
+    class OctreeNodeDataPrinter {
+    public:
+        virtual std::string GetDataString(NodeDataType& nodeData) const = 0;
+    };
+
 #pragma mark OctreeVisitor base classes
 
     OctreeTemplate
@@ -186,7 +194,7 @@ namespace AKOctree3 {
             }
         }
 
-        virtual void visitLeaf(const std::vector<const LeafDataType *> &items, NodeDataType &branchData) const {
+        virtual void visitLeaf(const std::vector<const LeafDataType *> &items, NodeDataType &nodeData) const {
             printf("Visit leaf\n");
         }
 
@@ -195,7 +203,54 @@ namespace AKOctree3 {
         }
 
         void ContinueVisit(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell) const {
-            cell->visit(*this);
+            cell->visit(this);
+        }
+    };
+
+    OctreeTemplate
+    class OctreeVisitorThreaded {
+
+        template<class L, class N, class P>
+        friend class Octree;
+
+        template<class L, class N, class P>
+        friend class OctreeCell;
+
+    public:
+        virtual ~OctreeVisitorThreaded() {}
+
+        virtual void visitPreRoot(const OctreeCell<LeafDataType, NodeDataType, Precision> * rootCell) const {
+        }
+
+        virtual void visitPreBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * const childs[8], NodeDataType &nodeData) const {
+        }
+
+        virtual void visitPostRoot(const OctreeCell<LeafDataType, NodeDataType, Precision> * rootCell) const {
+        }
+
+        virtual void visitPostBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * const childs[8], NodeDataType &nodeData) const {
+        }
+
+        virtual void visitLeaf(const std::vector<const LeafDataType *> &items, NodeDataType &nodeData) const {
+            printf("Visit leaf\n");
+        }
+
+    protected:
+        OctreeVisitorThreaded() {}
+
+    private:
+        void visitRoot(const OctreeCell<LeafDataType, NodeDataType, Precision> * rootCell) const {
+            visitPreRoot(rootCell);
+            rootCell->visit(this);
+            visitPostRoot(rootCell);
+        }
+
+        void visitBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * const childs[8], NodeDataType &nodeData) const {
+            visitPreBranch(childs, nodeData);
+            for (int i = 0; i < 8; ++i) {
+                childs[i]->visit(this);
+            }
+            visitPostBranch(childs, nodeData);
         }
     };
 
@@ -213,6 +268,7 @@ namespace AKOctree3 {
         typedef OctreeCell<LeafDataType, NodeDataType, Precision> OctreeCellLNP;
         typedef OctreeAgent<LeafDataType, NodeDataType, Precision> OctreeAgentLNP;
         typedef OctreeVisitor<LeafDataType, NodeDataType, Precision> OctreeVisitorLNP;
+        typedef OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision> OctreeVisitorThreadedLNP;
         typedef OctreeVec3<Precision> OctreeVec3p;
 
         OctreeLNP *baseOctree;
@@ -287,6 +343,31 @@ namespace AKOctree3 {
             }
         }
 
+        void printTreeAndSubtreeData(unsigned int level, OctreeNodeDataPrinter<LeafDataType, NodeDataType, Precision> *printer) const {
+            if(internalCellType == OctreeCellType::Leaf) {
+                printf("Leaf: %s\n", printer->GetDataString(nodeData).c_str());
+            } else {
+                printf("Branch ");
+                printf(printer->GetDataString(nodeData).c_str());
+                for (int i = 0; i < 8; ++i) {
+                    if (i != 0) {
+                        for (unsigned int j = 0; j < level + 1; ++j) {
+                            printf("       ");
+                        }
+                        for (unsigned int j = 0; j < level; ++j) {
+                            printf("  ");
+                        }
+                    }
+                    printf("%d ", i);
+                    if (childs[i] == nullptr) {
+                        printf("NULL\n");
+                    } else {
+                        childs[i]->printTreeAndSubtreeData(level + 1, printer);
+                    }
+                }
+            }
+        }
+
         bool insert(const LeafDataType *item, const OctreeAgentLNP *agent) {
             if(internalCellType == OctreeCellType::Leaf) {
                 for (unsigned int i = 0; i < data.size(); ++i) {
@@ -335,11 +416,27 @@ namespace AKOctree3 {
             }
         }
 
-        void visit(const OctreeVisitorLNP &visitor) const {
+        const OctreeCellLNP * const * getChilds() const {
+            return childs;
+        }
+
+        const std::vector<const LeafDataType *>& getData() const {
+            return data;
+        }
+
+        void visit(const OctreeVisitorLNP *visitor) const {
             if(internalCellType == OctreeCellType::Leaf) {
-                visitor.visitLeaf(data, this->nodeData);
+                visitor->visitLeaf(data, this->nodeData);
             } else {
-                visitor.visitBranch(childs, this->nodeData);
+                visitor->visitBranch(childs, this->nodeData);
+            }
+        }
+
+        void visit(const OctreeVisitorThreadedLNP *visitor) const {
+            if(internalCellType == OctreeCellType::Leaf) {
+                visitor->visitLeaf(data, this->nodeData);
+            } else {
+                visitor->visitBranch(childs, this->nodeData);
             }
         }
 
@@ -463,7 +560,6 @@ namespace AKOctree3 {
 
         unsigned int threadsNumber = 1;
         std::mutex threadsMutex;
-        std::mutex rootMutex;
 
         OctreeCell<LeafDataType, NodeDataType, Precision>* root;
         std::vector<const LeafDataType *> itemsToAdd;
@@ -474,7 +570,6 @@ namespace AKOctree3 {
                unsigned int threadsNumber = 1) : maxItemsPerCell(maxItemsPerCell),
                                                  threadsNumber(threadsNumber) {
 
-            assert(radius > Precision(0) && "Assert has to be > 0");
             if(threadsNumber == 0) {
                 this->threadsNumber = std::thread::hardware_concurrency();
             }
@@ -490,7 +585,6 @@ namespace AKOctree3 {
                                                              maxItemsPerCell(maxItemsPerCell),
                                                              threadsNumber(threadsNumber) {
 
-            assert(radius > Precision(0) && "Radius has to be > 0");
             if(threadsNumber == 0) {
                 this->threadsNumber = std::thread::hardware_concurrency();
             }
@@ -525,6 +619,8 @@ namespace AKOctree3 {
                     const OctreeAgent<LeafDataType, NodeDataType, Precision> *agentInsert,
                     const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision> *agentAdjust,
                     bool autoAdjustTree = true) {
+
+            assert((autoAdjustTree || radius > Precision(0)) && "Radius has to be > 0");
 
             if (autoAdjustTree && agentAdjust != nullptr && this->itemsCount == 0) {
 
@@ -681,38 +777,94 @@ namespace AKOctree3 {
             root->printTreeAndSubtree(0);
         }
 
+        void printTreeData(OctreeNodeDataPrinter<LeafDataType, NodeDataType, Precision> *printer) const {
+            root->printTreeAndSubtreeData(0, printer);
+        }
+
         unsigned int forceGetItemsCount() const {
             return root->forceCountItems();
         }
 
         void visit(const OctreeVisitor<LeafDataType, NodeDataType, Precision> *visitor) const {
             if (threadsNumber != 1) {
-                assert(false);
-                /*
-                visitor.visitPreRoot(root);
+                printf("WARNING: visiting with multiple tree requires OctreeVisitorThreaded\nUsing 1 thread\n");
+            }
+            visitor->visitRoot(root);
+        }
+
+        void visit(const OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision> *visitor) const {
+            if (threadsNumber != 1) {
+
+                visitor->visitPreRoot(root);
                 if (root->isLeaf()) {
                     root->visit(visitor);
                 } else {
-                    if (threadsNumber == 0) {
-                        threadsNumber = std::thread::hardware_concurrency();
-                    }
-                    auto rootBranch = (OctreeBranch<LeafDataType, NodeDataType> *) root;
-                    visitor.visitPreBranch(rootBranch->GetChilds(), root->GetBranchData());
-                    int th[8];
-                    for (int i = 0; i < threadsNumber; ++i) {
-                        th[i] = i;
-                        threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(th[i])));
-                    }
-                    for (int i = 0; i < threadsNumber; ++i) {
-                        threads[i].join();
-                    }
-                    threads.clear();
-                    visitor.visitPostBranch(rootBranch->GetChilds(), root->GetBranchData());
+                    visitor->visitPreBranch(root->getChilds(), root->getNodeData());
+                    int from[16][2];
+                    int to[16][2];
+                    const OctreeCell<LeafDataType, NodeDataType, Precision>* roots[16][2];
+                    if(threadsNumber <= 8) {
+                        roots[0][0] = root;
+                        for (int i = 0; i < threadsNumber; ++i) {
+                            from[i][0] = (8 * i) / threadsNumber;
+                            to[i][0] = std::min<int>(8, (8 * (i+1)) / threadsNumber);
+                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[0]), std::ref(from[i]), std::ref(to[i]), 1));
+                        }
+                        for (int i = 0; i < threadsNumber; ++i) {
+                            threads[i].join();
+                        }
+                        threads.clear();
 
+                    } else {
+                        auto childs = root->getChilds();
+
+                        for (int i = 0; i < 8; ++i) {
+                            if(childs[i]->isLeaf()) {
+                                visitor->visitLeaf(childs[i]->getData(), childs[i]->getNodeData());
+                            } else {
+                                visitor->visitPreBranch(childs[i]->getChilds(), childs[i]->getNodeData());
+                            }
+                        }
+
+                        for (int i = 0; i < threadsNumber; ++i) {
+                            int fromGeneral = (64 * i) / threadsNumber;
+                            int toGeneral = std::min<int>(64, (64 * (i+1)) / threadsNumber);
+
+                            int fromNode = fromGeneral/8;
+                            int toNode = toGeneral/8;
+                            if(fromNode == toNode) {
+                                from[i][0] = fromGeneral - fromNode * 8;
+                                to[i][0] = toGeneral - toNode * 8;
+                                roots[i][0] = childs[fromNode];
+                                threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 1));
+                            } else {
+                                from[i][0] = fromGeneral - fromNode * 8;
+                                to[i][0] = 8;
+                                from[i][1] = 0;
+                                to[i][1] = toGeneral - toNode * 8;
+                                roots[i][0] = childs[fromNode];
+                                roots[i][1] = childs[toNode];
+                                threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 2));
+                            }
+                        }
+
+                        for (int i = 0; i < threadsNumber; ++i) {
+                            threads[i].join();
+                        }
+                        threads.clear();
+
+                        for (int i = 0; i < 8; ++i) {
+                            if(!childs[i]->isLeaf()) {
+                                visitor->visitPostBranch(childs[i]->getChilds(), childs[i]->getNodeData());
+                            }
+                        }
+
+                    }
+                    visitor->visitPostBranch(root->getChilds(), root->getNodeData());
                 }
 
-                visitor.visitPostRoot(root);
-                 */
+                visitor->visitPostRoot(root);
+
             } else {
                 visitor->visitRoot(root);
             }
@@ -727,7 +879,7 @@ namespace AKOctree3 {
         }
 
     private:
-        void insertThread(const OctreeAgent<LeafDataType> *agent) {
+        void insertThread(const OctreeAgent<LeafDataType, NodeDataType, Precision> *agent) {
             unsigned int itemsToBatch = threadsNumber * threadsNumber;
 
             while (!itemsToAdd.empty()) {
@@ -763,6 +915,26 @@ namespace AKOctree3 {
             }
 
         }
+
+        void visitThread(const OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision> *visitor,
+                         const OctreeCell<LeafDataType, NodeDataType, Precision> *threadRoots[2],
+                         int* from,
+                         int* to,
+                         int size) const {
+
+            for (int j = 0; j < size; ++j) {
+                if(!threadRoots[j]->isLeaf()) {
+                    auto childs = threadRoots[j]->getChilds();
+                    for (int i = from[j]; i < to[j]; ++i) {
+                        childs[i]->visit(visitor);
+                    }
+                } else {
+                    visitor->visitLeaf(threadRoots[j]->getData(), threadRoots[j]->getNodeData());
+                }
+            }
+
+        }
+
     };
 }
 /*

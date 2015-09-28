@@ -234,7 +234,7 @@
 		3A55965E1B6A78B2008871A4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "POINTS=10000000";
+				GCC_PREPROCESSOR_DEFINITIONS = "POINTS=200";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
@@ -248,7 +248,7 @@
 		3A55965F1B6A78B2008871A4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = "POINTS=10000000";
+				GCC_PREPROCESSOR_DEFINITIONS = "POINTS=200";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
