@@ -203,8 +203,7 @@ namespace AKOctree3 {
 
     enum class OctreeCellType {
         Leaf,
-        Branch,
-        None
+        Branch
     };
 
     OctreeTemplate
@@ -237,11 +236,6 @@ namespace AKOctree3 {
                                             cellType(cellType),
                                             internalCellType(cellType) {
 
-            if(cellType == OctreeCellType::Leaf) {
-                for (int i = 0; i < 8; ++i) {
-                    childs[i] = new OctreeCellLNP(baseOctree, center, radius, OctreeCellType::None);
-                }
-            }
         }
 
         bool getItemPath(const LeafDataType *item, std::string &path) const {
@@ -450,8 +444,7 @@ namespace AKOctree3 {
                 OctreeVec3<Precision> newCenter = this->center + OctreeVec3<Precision>(right ? halfRadius : -halfRadius,
                                                                                        up ? halfRadius : -halfRadius,
                                                                                        front ? halfRadius : -halfRadius);
-                childs[i]->moveCell(newCenter, halfRadius);
-                childs[i]->setType(OctreeCellType::Leaf);
+                childs[i] = new OctreeCellLNP(baseOctree, newCenter, halfRadius);
             }
             internalCellType = OctreeCellType::Branch;
             for (unsigned int i = 0; i < items.size(); ++i) {
@@ -459,16 +452,6 @@ namespace AKOctree3 {
             }
             this->insert(item, agent);
             cellType = OctreeCellType::Branch;
-        }
-
-        void setType(OctreeCellType cellType) {
-            if(this->cellType == OctreeCellType::None) {
-                for (int i = 0; i < 8; ++i) {
-                    childs[i] = new OctreeCellLNP(baseOctree, center, radius);
-                }
-            }
-            this->cellType = cellType;
-            this->internalCellType = cellType;
         }
     };
 
@@ -749,7 +732,7 @@ namespace AKOctree3 {
 
     private:
         void insertThread(const OctreeAgent<LeafDataType> *agent) {
-            unsigned int itemsToBatch = std::max(threadsNumber, 1u) * 2;
+            unsigned int itemsToBatch = threadsNumber * threadsNumber;
 
             while (!itemsToAdd.empty()) {
                 threadsMutex.lock();
