@@ -597,7 +597,7 @@ TEST_F (OctreeTests, LockTest) {
     ASSERT_EQ(30, o->forceGetItemsCount());
 
 }
-
+/*
 TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     o = new Octree<Point, Point>(1);
     o2 = new Octree<Point, Point>(1,0);
@@ -642,7 +642,7 @@ TEST_F (OctreeTests, TestVisit5PointsInThreads) {
 
     delete []p;
 }
-
+*/
 
 TEST_F (OctreeTests, PerformanceSparseInsertTests) {
     printf("Using %u threads\n", std::thread::hardware_concurrency());
