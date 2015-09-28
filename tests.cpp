@@ -6,7 +6,7 @@
 #include "gtest/gtest.h"
 #include "Octree.h"
 
-using namespace AKOctree2;
+using namespace AKOctree3;
 
 struct Point {
   glm::vec3 position;
@@ -63,18 +63,18 @@ public:
 
 class OctreePointVisitor : public OctreeVisitor<Point> {
 public:
-    virtual void visitRoot(const std::shared_ptr< OctreeCell<Point> > rootCell) const override {
+    virtual void visitRoot(const OctreeCell<Point> * rootCell) const override {
         ContinueVisit(rootCell);
-        testPoint = rootCell->getBranchData();
+        testPoint = rootCell->getNodeData();
     }
 
-    virtual void visitBranch(const std::shared_ptr< OctreeCell<Point> > childs[8], Point &nodeData) const override {
+    virtual void visitBranch(const OctreeCell<Point> *const  childs[8], Point &nodeData) const override {
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
         for (int i = 0; i < 8; ++i) {
             ContinueVisit(childs[i]);
-            nodeData.mass += childs[i]->getBranchData().mass;
-            nodeData.position += childs[i]->getBranchData().position * childs[i]->getBranchData().mass;
+            nodeData.mass += childs[i]->getNodeData().mass;
+            nodeData.position += childs[i]->getNodeData().position * childs[i]->getNodeData().mass;
         }
         if (nodeData.mass > 0.0f) {
             nodeData.position /= nodeData.mass;
@@ -115,8 +115,9 @@ public:
             nodeData.position /= nodeData.mass;
         }
     }
-    */
+*/
 };
+
 
 class OctreeTests : public ::testing::Test {
 
@@ -136,7 +137,6 @@ class OctreeTests : public ::testing::Test {
         delete o2;
     }
 };
-
 
 TEST_F (OctreeTests, GenerateData) {
     Point *p = new Point[points];
@@ -159,7 +159,6 @@ TEST_F (OctreeTests, GenerateData) {
     delete []p;
 }
 
-
 TEST_F (OctreeTests, OctreeDefaultConstructor) {
   o = new Octree<Point, Point>(4);
   ASSERT_NE(o, nullptr);
@@ -178,25 +177,6 @@ TEST_F (OctreeTests, SingleInsertTest) {
     o->insert(&p[0], &agent);
     ASSERT_EQ("", o->getItemPath(&p[0]));
     ASSERT_EQ(1, o->getItemsCount());
-    delete []p;
-}
-
-TEST_F (OctreeTests, GetItemsCountTest) {
-    o = new Octree<Point, Point>(1);
-    OctreePointAgent agent;
-    Point *p = new Point[5];
-    p[0].position = glm::vec3(1,1,1);
-    p[1].position = glm::vec3(2,1,1);
-    p[2].position = glm::vec3(3,1,1);
-    p[3].position = glm::vec3(4,1,1);
-    p[4].position = glm::vec3(5,1,1);
-    o->insert(&p[0], &agent);
-    o->insert(&p[1], &agent);
-    o->insert(&p[2], &agent);
-    o->insert(&p[3], &agent);
-    o->insert(&p[4], &agent);
-    ASSERT_EQ(5, o->getItemsCount());
-
     delete []p;
 }
 
@@ -219,6 +199,25 @@ TEST_F (OctreeTests, Insert5Points) {
     ASSERT_EQ("345", o->getItemPath(&p[2]));
     ASSERT_EQ("345", o->getItemPath(&p[3]));
     ASSERT_EQ("345", o->getItemPath(&p[4]));
+
+    delete []p;
+}
+
+TEST_F (OctreeTests, GetItemsCountTest) {
+    o = new Octree<Point, Point>(1);
+    OctreePointAgent agent;
+    Point *p = new Point[5];
+    p[0].position = glm::vec3(1,1,1);
+    p[1].position = glm::vec3(2,1,1);
+    p[2].position = glm::vec3(3,1,1);
+    p[3].position = glm::vec3(4,1,1);
+    p[4].position = glm::vec3(5,1,1);
+    o->insert(&p[0], &agent);
+    o->insert(&p[1], &agent);
+    o->insert(&p[2], &agent);
+    o->insert(&p[3], &agent);
+    o->insert(&p[4], &agent);
+    ASSERT_EQ(5, o->getItemsCount());
 
     delete []p;
 }
@@ -430,7 +429,6 @@ TEST_F (OctreeTests, EqualityOperatorTest) {
     delete []p;
 }
 
-
 TEST_F (OctreeTests, ReverseInputEqualityOperatorTest) {
     o = new Octree<Point, Point>(1);
     o2 = new Octree<Point, Point>(1);
@@ -488,7 +486,7 @@ TEST_F (OctreeTests, InequalityOperatorTest) {
     o2->insert(&p[1], &agent);
     o2->insert(&p[2], &agent);
     o2->insert(&p[3], &agent);
-    ASSERT_FALSE(*o==*o2);
+    ASSERT_TRUE(*o != *o2);
 
     delete []p;
 }
@@ -586,6 +584,19 @@ TEST_F (OctreeTests, Insert10PointsAtOnceWithThreadsWithVector) {
     ASSERT_TRUE(o->forceGetItemsCount() == o2->forceGetItemsCount());
 }
 
+TEST_F (OctreeTests, LockTest) {
+    o = new Octree<Point, Point>(4, 0);
+    OctreePointAgent agent;
+    std::vector<Point> points;
+    Point p;
+    for (int i = 0; i < 30; ++i) {
+        p.position = glm::vec3(0.2 + 0.005*i, 1, 1);
+        points.push_back(p);
+    }
+    o->insert(points, &agent);
+    ASSERT_EQ(30, o->forceGetItemsCount());
+
+}
 /*
 TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     o = new Octree<Point, Point>(1, 0, 0);
@@ -632,6 +643,7 @@ TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     delete []p;
 }
 */
+
 TEST_F (OctreeTests, PerformanceSparseInsertTests) {
     printf("Using %u threads\n", std::thread::hardware_concurrency());
     o = new Octree<Point, Point>(8, OctreeVec3<float>(0), 100, 0);
@@ -664,6 +676,7 @@ TEST_F (OctreeTests, PerformanceSparseInsertTests) {
     ASSERT_TRUE(*o == *o2);
     delete []p;
 }
+
 /*
 TEST_F (OctreeTests, PerformanceSparseInsertAdjustTests) {
     o = new Octree<Point, Point>(8, 0, 0, glm::vec3(0), 100, 0);
