@@ -298,7 +298,6 @@ namespace AKOctree3 {
                 if (this->baseOctree->getMaxItemsPerCell() <= data.size()) {
                     makeBranch(data, item, agent);
                 } else {
-                    //std::cout << "Insert into leaf" << std::endl;
                     data.push_back(item);
                 }
                 return true;
@@ -369,7 +368,7 @@ namespace AKOctree3 {
                     data.push_back(item);
                 }
                 return true;
-            } else if(internalCellType == OctreeCellType::Branch) {
+            } else {
                 Precision halfRadius = this->radius / Precision(2);
                 for (int i = 0; i < 8; ++i) {
                     bool up = i < 4;//+y
@@ -389,10 +388,7 @@ namespace AKOctree3 {
                     }
                 }
                 return true;
-            } else {
-                printf("WTTF WTF\n");
             }
-            return true;
         }
 
         friend bool operator==(const OctreeCellLNP &lhs, const OctreeCellLNP &rhs) {
