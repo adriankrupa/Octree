@@ -22,8 +22,15 @@ matrix:
           packages:
             - ['g++-4.9']
             - ['libglm-dev']
+            - ['python3']
       env: CXX=g++-4.9
-      before_install: CXX=g++-4.9
+      before_install:
+        - CXX=g++-4.9
+        - alias gcov=gcov-5
+        - pip install --user requests[security]
+        - pip install --user cpp-coveralls
+      after_success:
+        - coveralls --gcov gcov-4.9 --verbose --gcov-options '\-lp'
 
     - os: linux
       compiler: gcc
@@ -33,15 +40,9 @@ matrix:
           packages:
             - ['g++-5']
             - ['libglm-dev']
-            - ['python3']
       env: CXX=g++-5
       before_install:
         - CXX=g++-5
-        - alias gcov=gcov-5
-        - pip install --user requests[security]
-        - pip install --user cpp-coveralls
-      after_success:
-        - coveralls --gcov gcov-5 --verbose --gcov-options '\-lp'
 
     - os: linux
       compiler: clang++-3.5

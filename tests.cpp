@@ -818,8 +818,7 @@ TEST_F (OctreeTests, PerformanceDenseInsertAdjustTests) {
     end = std::chrono::steady_clock::now();
     diff = end - start;
     std::cout << "All threads with auto adjust: " << std::chrono::duration<double, std::milli>(diff).count() << " ms" << std::endl;
-
-
+    
     ASSERT_EQ(o->getItemsCount(), o2->getItemsCount());
     ASSERT_EQ(o->forceGetItemsCount(), o2->forceGetItemsCount());
     ASSERT_EQ(oAdjust->forceGetItemsCount(), o2Adjust->forceGetItemsCount());
