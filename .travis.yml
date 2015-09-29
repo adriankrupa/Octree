@@ -40,7 +40,7 @@ matrix:
         - pip install --user requests[security]
         - pip install --user cpp-coveralls
       after_success:
-        - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
+        - coveralls --exclude lib --exclude gtest --verbose --gcov-options '\-lp'
 
     - os: linux
       compiler: clang++-3.5
