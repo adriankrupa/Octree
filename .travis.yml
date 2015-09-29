@@ -1,4 +1,4 @@
-sudo: true
+sudo: false
 language: cpp
 
 matrix:
@@ -33,11 +33,12 @@ matrix:
           packages:
             - ['g++-5']
             - ['libglm-dev']
+            - ['python3']
       env: CXX=g++-5
       before_install:
         - CXX=g++-5
-        - sudo pip install requests[security]
-        - sudo pip install --user cpp-coveralls
+        - pip install requests[security]
+        - pip install --user cpp-coveralls
       after_success:
         - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
 
