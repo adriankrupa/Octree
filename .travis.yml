@@ -12,7 +12,9 @@ matrix:
             - ['g++-4.8']
             - ['libglm-dev']
       env: CXX=g++-4.8
-      before_install: CXX=g++-4.8
+      before_install:
+        - CXX=g++-4.8
+        - sudo pip install cpp-coveralls
 
     - os: linux
       compiler: gcc
@@ -86,4 +88,7 @@ matrix:
         - brew install glm
         - CXX=clang++ V='Apple LLVM 7.0.0'
 
-script: make clear test run POINTS=1000000
+script:
+  - make clear test run POINTS=1000000
+  - ./configure --enable-gcov && make && make check
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'

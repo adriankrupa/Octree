@@ -1,10 +1,12 @@
 CXX ?= g++-4.9
 POINTS ?= 100000
 INCLUDES = -I .
-CXXFLAGS = -std=c++11 -pthread -Wall -g -Wno-unknown-pragmas
+CXXFLAGS = -std=c++11 -pthread -Wall -Wno-unknown-pragmas
+CXXFLAGS_DEBUG = -g -O0 --coverage
 
 test: tests.o gtest-all.o
-	$(CXX) $(CXXFLAGS) tests.o gtest-all.o -o Octree.out
+	$(CXX) --version
+	$(CXX) $(CXXFLAGS) $(CXXFLAGS_DEBUG) tests.o gtest-all.o -o Octree.out
 
 tests.o: tests.cpp Octree.h
 	$(CXX) -c $(CXXFLAGS) -DPOINTS=${POINTS} $(INCLUDES) $< -o $@
@@ -16,7 +18,7 @@ run:
 	./Octree.out
 
 valgrind:
-	valgrind --leak-check=full --track-origins=yes --dsymutil=yes ./Octree.out
+	valgrind --leak-check=full --track-origins=yes --dsymutil=yes --error-exitcode=1 ./Octree.out
 
 clear:
 	rm -rf Octree.out tests.o gtest-all.o
