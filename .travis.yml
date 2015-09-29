@@ -14,7 +14,7 @@ matrix:
       env: CXX=g++-4.8
       before_install:
         - CXX=g++-4.8
-        - sudo pip install cpp-coveralls
+        - pip install --user cpp-coveralls
 
     - os: linux
       compiler: gcc
@@ -91,4 +91,5 @@ matrix:
 script:
   - make clear test run POINTS=1000000
   - ./configure --enable-gcov && make && make check
+  after_success:
   - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
