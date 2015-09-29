@@ -23,6 +23,7 @@ matrix:
             - ['g++-4.9']
             - ['libglm-dev']
             - ['python3']
+            - ['lcov']
       env: CXX=g++-4.9
       before_install:
         - CXX=g++-4.9
