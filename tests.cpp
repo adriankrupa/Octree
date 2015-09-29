@@ -821,7 +821,6 @@ TEST_F (OctreeTests, PerformanceDenseInsertAdjustTests) {
 
 
     ASSERT_EQ(o->getItemsCount(), o2->getItemsCount());
-    //ASSERT_EQ(oAdjust->GetItemsCount(), o2Adjust->GetItemsCount());
     ASSERT_EQ(o->forceGetItemsCount(), o2->forceGetItemsCount());
     ASSERT_EQ(oAdjust->forceGetItemsCount(), o2Adjust->forceGetItemsCount());
     ASSERT_TRUE(*o == *o2);

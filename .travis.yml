@@ -41,7 +41,7 @@ matrix:
         - pip install --user requests[security]
         - pip install --user cpp-coveralls
       after_success:
-        - coveralls --gcov gcov-5 --gcov-options '\-lp'
+        - coveralls --gcov gcov-5 --verbose --gcov-options '\-lp'
 
     - os: linux
       compiler: clang++-3.5
