@@ -9,7 +9,7 @@ test: tests.o gtest-all.o
 	$(CXX) $(CXXFLAGS) $(CXXFLAGS_DEBUG) tests.o gtest-all.o -o Octree.out
 
 tests.o: tests.cpp Octree.h
-	$(CXX) -c $(CXXFLAGS) -DPOINTS=${POINTS} $(INCLUDES) $< -o $@
+	$(CXX) -c $(CXXFLAGS) $(CXXFLAGS_DEBUG) -DPOINTS=${POINTS} $(INCLUDES) $< -o $@
 
 gtest-all.o: gtest/gtest-all.cc
 	$(CXX) -c $(CXXFLAGS) $(INCLUDES) $< -o $@
