@@ -61,7 +61,7 @@ namespace AKOctree3 {
         Precision z = Precision(0);
 
         OctreeVec3() : x(0), y(0), z(0) {}
-        OctreeVec3(Precision x) : x(x), y(x), z(x) {}
+        explicit OctreeVec3(Precision x) : x(x), y(x), z(x) {}
         OctreeVec3(Precision x, Precision y, Precision z) : x(x), y(y), z(z) {}
 
         OctreeVec3& operator+=(const OctreeVec3& rhs) {
@@ -246,6 +246,10 @@ namespace AKOctree3 {
                                             cellType(cellType),
                                             internalCellType(cellType) {
 
+            for (int i = 0; i < 8; ++i) {
+                childs[i] = nullptr;
+            }
+
         }
 
         bool getItemPath(const LeafDataType *item, std::string &path) const {
@@ -271,7 +275,7 @@ namespace AKOctree3 {
 
         void printTreeAndSubtree(unsigned int level) const {
             if(internalCellType == OctreeCellType::Leaf) {
-                printf("Leaf, items:%lu ", data.size());
+                printf("Leaf, items:%lu ", (unsigned long)data.size());
                 for (unsigned int i = 0; i < data.size(); ++i) {
                     printf("%llu ", (unsigned long long) data[i]);
                 }
@@ -578,8 +582,8 @@ namespace AKOctree3 {
 
             if (autoAdjustTree && agentAdjust != nullptr && this->itemsCount == 0) {
 
-                OctreeVec3<Precision> max = center + radius;
-                OctreeVec3<Precision> min = center - radius;
+                OctreeVec3<Precision> max = center + OctreeVec3<Precision>(radius);
+                OctreeVec3<Precision> min = center - OctreeVec3<Precision>(radius);
 
                 for (unsigned int i = 0; i < itemsCount; ++i) {
                     max = agentAdjust->GetMaxValuesForAutoAdjust(&items[i], max);
@@ -652,8 +656,8 @@ namespace AKOctree3 {
 
             if (autoAdjustTree && agentAdjust != nullptr && this->itemsCount == 0) {
 
-                OctreeVec3<Precision> max = center + radius;
-                OctreeVec3<Precision> min = center - radius;
+                OctreeVec3<Precision> max = center + OctreeVec3<Precision>(radius);
+                OctreeVec3<Precision> min = center - OctreeVec3<Precision>(radius);
 
                 for (unsigned int i = 0; i < items.size(); ++i) {
                     max = agentAdjust->GetMaxValuesForAutoAdjust(&items[i], max);

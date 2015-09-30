@@ -2,7 +2,7 @@ CXX ?= g++-4.9
 POINTS ?= 100000
 INCLUDES = -I .
 CXXFLAGS = -std=c++11 -pthread -Wall -Wno-unknown-pragmas
-CXXFLAGS_DEBUG = -g -O0 --coverage
+CXXFLAGS_DEBUG = -g -O0 --coverage --pedantic
 
 test: tests.o gtest-all.o
 	$(CXX) --version
