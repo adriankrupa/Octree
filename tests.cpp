@@ -13,7 +13,7 @@ struct Point {
 
 unsigned int points = POINTS;
 Point testPoint;
-/*
+
 class OctreePointAgent : public OctreeAgent<Point, Point, double> {
 
 public:
@@ -135,7 +135,7 @@ public:
         return s;
     }
 };
-*/
+
 class OctreeTests : public ::testing::Test {
 
   protected:
@@ -186,7 +186,7 @@ TEST_F (OctreeTests, OctreMaxItemsPerCellGetter) {
   ASSERT_EQ(4, o->getMaxItemsPerCell());
 }
 
-/*
+
 TEST_F (OctreeTests, SingleInsertTest) {
     o = new Octree<Point, Point, double>(4);
     OctreePointAgent agent;
@@ -197,7 +197,7 @@ TEST_F (OctreeTests, SingleInsertTest) {
     ASSERT_EQ(1, o->getItemsCount());
     delete []p;
 }
-
+/*
 TEST_F (OctreeTests, Insert5Points) {
     o = new Octree<Point, Point, double>(4);
     OctreePointAgent agent;
