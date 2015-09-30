@@ -662,7 +662,7 @@ TEST_F (OctreeTests, TestVisit5PointsInThreads) {
 
     delete []p;
 }
-/*
+
 TEST_F (OctreeTests, PerformanceSparseInsertTests) {
     printf("Using %u threads\n", std::thread::hardware_concurrency());
     o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 0);
@@ -826,7 +826,7 @@ TEST_F (OctreeTests, PerformanceDenseInsertAdjustTests) {
     ASSERT_TRUE(*oAdjust == *o2Adjust);
     delete []p;
 }
-
+/*
 TEST_F (OctreeTests, PerformanceSparseVisitTests) {
     o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 0);
     o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
