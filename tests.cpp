@@ -80,7 +80,7 @@ public:
     virtual void  visitLeaf  ( const std::vector<const Point*>& items, Point& nodeData) const override {
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
-        for (int i = 0; i < items.size(); ++i) {
+        for (unsigned int i = 0; i < items.size(); ++i) {
             nodeData.mass += items[i]->mass;
             nodeData.position += items[i]->mass * items[i]->position;
         }
@@ -115,7 +115,7 @@ class OctreePointVisitorThreaded : public OctreeVisitorThreaded<Point, Point, do
     virtual void visitLeaf(const std::vector<const Point *> &items, Point &nodeData) const override {
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
-        for (int i = 0; i < items.size(); ++i) {
+        for (unsigned int i = 0; i < items.size(); ++i) {
             nodeData.mass += items[i]->mass;
             nodeData.position += items[i]->mass * items[i]->position;
         }
@@ -160,7 +160,7 @@ TEST_F (OctreeTests, GenerateData) {
     Point *p = new Point[points];
     std::fstream outputFile;
     outputFile.open("denseTest.txt", std::ios::out | std::ios::binary);
-    for (int i = 0; i < points; ++i) {
+    for (unsigned int i = 0; i < points; ++i) {
         p[i].position = glm::dvec3(rand()%10000/100000.0f, rand()%10000/100000.0f, rand()%10000/100000.0f);
         p[i].mass = 1.0f;
     }
@@ -168,7 +168,7 @@ TEST_F (OctreeTests, GenerateData) {
     outputFile.close();
 
     outputFile.open("test.txt", std::ios::out | std::ios::binary);
-    for (int i = 0; i < points; ++i) {
+    for (unsigned int i = 0; i < points; ++i) {
         p[i].position = glm::vec3(rand()%200000/1000.0f-100.0f, rand()%200000/1000.0f-100.0f, rand()%200000/1000.0f-100.0f);
         p[i].mass = 1.0f;
     }

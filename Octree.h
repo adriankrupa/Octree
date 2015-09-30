@@ -594,16 +594,16 @@ namespace AKOctree3 {
 
             if (threadsNumber != 1) {
                 itemsToAdd.reserve(itemsCount);
-                for (int i = 0; i < itemsCount; ++i) {
+                for (unsigned int i = 0; i < itemsCount; ++i) {
                     itemsToAdd.push_back(&items[i]);
                 }
                 if (threadsNumber == 0) {
                     threadsNumber = std::thread::hardware_concurrency();
                 }
-                for (int i = 0; i < threadsNumber; ++i) {
+                for (unsigned int i = 0; i < threadsNumber; ++i) {
                     threads.push_back(std::thread(&Octree::insertThread, this, agentInsert));
                 }
-                for (int i = 0; i < threadsNumber; ++i) {
+                for (unsigned int i = 0; i < threadsNumber; ++i) {
                     threads[i].join();
                 }
                 threads.clear();
@@ -669,17 +669,17 @@ namespace AKOctree3 {
 
             if (threadsNumber != 1) {
                 itemsToAdd.reserve(items.size());
-                for (int i = 0; i < items.size(); ++i) {
+                for (unsigned int i = 0; i < items.size(); ++i) {
                     itemsToAdd.push_back(&items[i]);
                 }
                 if (threadsNumber == 0) {
                     threadsNumber = std::thread::hardware_concurrency();
                 }
                 threads.clear();
-                for (int i = 0; i < threadsNumber; ++i) {
+                for (unsigned int i = 0; i < threadsNumber; ++i) {
                     threads.push_back(std::thread(&Octree::insertThread, this, agentInsert));
                 }
-                for (int i = 0; i < threadsNumber; ++i) {
+                for (unsigned int i = 0; i < threadsNumber; ++i) {
                     threads[i].join();
                 }
                 threads.clear();
@@ -759,12 +759,12 @@ namespace AKOctree3 {
                     const OctreeCell<LeafDataType, NodeDataType, Precision>* roots[16][2];
                     if(threadsNumber <= 8) {
                         roots[0][0] = root;
-                        for (int i = 0; i < threadsNumber; ++i) {
+                        for (unsigned int i = 0; i < threadsNumber; ++i) {
                             from[i][0] = (8 * i) / threadsNumber;
                             to[i][0] = std::min<int>(8, (8 * (i+1)) / threadsNumber);
                             threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[0]), std::ref(from[i]), std::ref(to[i]), 1));
                         }
-                        for (int i = 0; i < threadsNumber; ++i) {
+                        for (unsigned int i = 0; i < threadsNumber; ++i) {
                             threads[i].join();
                         }
                         threads.clear();
@@ -780,7 +780,7 @@ namespace AKOctree3 {
                             }
                         }
 
-                        for (int i = 0; i < threadsNumber; ++i) {
+                        for (unsigned int i = 0; i < threadsNumber; ++i) {
                             int fromGeneral = (64 * i) / threadsNumber;
                             int toGeneral = std::min<int>(64, (64 * (i+1)) / threadsNumber);
 
@@ -802,7 +802,7 @@ namespace AKOctree3 {
                             }
                         }
 
-                        for (int i = 0; i < threadsNumber; ++i) {
+                        for (unsigned int i = 0; i < threadsNumber; ++i) {
                             threads[i].join();
                         }
                         threads.clear();
@@ -844,7 +844,7 @@ namespace AKOctree3 {
                 }
                 std::vector<const LeafDataType *> tempItems;
                 tempItems.reserve(itemsToBatch);
-                for (int i = 0; i < itemsToBatch; ++i) {
+                for (unsigned int i = 0; i < itemsToBatch; ++i) {
                     if (itemsToAdd.empty()) {
                         break;
                     }
@@ -854,7 +854,7 @@ namespace AKOctree3 {
                     this->itemsCount++;
                 }
                 threadsMutex.unlock();
-                for (int i = 0; i < tempItems.size(); ++i) {
+                for (unsigned int i = 0; i < tempItems.size(); ++i) {
                     auto item = tempItems[i];
                     if (agent->isItemOverlappingCell(item, center, radius)) {
                         if(root -> isLeaf()) {
@@ -877,6 +877,8 @@ namespace AKOctree3 {
                          int size) const {
 
             for (int j = 0; j < size; ++j) {
+                if(from[j] == to[j])
+                    continue;
                 if(!threadRoots[j]->isLeaf()) {
                     auto childs = threadRoots[j]->getChilds();
                     for (int i = from[j]; i < to[j]; ++i) {
