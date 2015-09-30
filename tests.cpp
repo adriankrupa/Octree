@@ -826,7 +826,7 @@ TEST_F (OctreeTests, PerformanceDenseInsertAdjustTests) {
     ASSERT_TRUE(*oAdjust == *o2Adjust);
     delete []p;
 }
-
+/*
 TEST_F (OctreeTests, PerformanceSparseVisitTests) {
     o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 0);
     o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
@@ -869,7 +869,7 @@ TEST_F (OctreeTests, PerformanceSparseVisitTests) {
     ASSERT_FLOAT_EQ(point.position.z, testPoint.position.z);
     delete []p;
 }
-/*
+
 TEST_F (OctreeTests, PerformanceSparseVisitAdjustTests) {
     o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 0);
     o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
