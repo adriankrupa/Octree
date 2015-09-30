@@ -874,15 +874,18 @@ namespace AKOctree3 {
                          int* to,
                          int size) const {
 
+            printf("Starting visiting threads\n");
             for (int j = 0; j < size; ++j) {
                 if(from[j] == to[j])
                     continue;
                 if(!threadRoots[j]->isLeaf()) {
+                    printf("Is not leaf, processing\n");
                     auto childs = threadRoots[j]->getChilds();
                     for (int i = from[j]; i < to[j]; ++i) {
                         childs[i]->visit(visitor);
                     }
                 } else {
+                    printf("Is leaf,processing\n");
                     visitor->visitLeaf(threadRoots[j]->getData(), threadRoots[j]->getNodeData());
                 }
             }
