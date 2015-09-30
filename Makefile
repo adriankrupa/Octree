@@ -33,3 +33,8 @@ valgrind:
 
 clear:
 	rm -rf Octree.out *.o *.gc*
+
+cppCheck:
+	cppcheck --enable=all --force --language=c++ --xml --verbose -f tests.cpp Octree.h  2> err.xml
+	cppcheck-htmlreport --file err.xml --report-dir="CodeAnalysisReport" --title="Octree"
+	
