@@ -30,7 +30,7 @@ matrix:
         - alias gcov=gcov-4.9
         - gem install coveralls-lcov
       after_success:
-          - lcov --compat-libtool --gcov-tool gcov-4.9 --directory . --capture --output-file coverage.info
+          - lcov --compat-libtool --gcov-tool gcov-4.9 --directory . --capture --output-file --no-external -r gtest.gcda coverage.info
           - coveralls-lcov coverage.info
 
     - os: linux
