@@ -59,12 +59,12 @@ public:
 
 class OctreePointVisitor : public OctreeVisitor<Point, Point, double> {
 public:
-    virtual void visitRoot(const OctreeCell<Point, Point, double> * rootCell) const override {
+    virtual void visitRoot(const std::shared_ptr<OctreeCell<Point, Point, double> > rootCell) const override {
         ContinueVisit(rootCell);
         testPoint = rootCell->getNodeData();
     }
 
-    virtual void visitBranch(const OctreeCell<Point, Point, double> *const  childs[8], Point &nodeData) const override {
+    virtual void visitBranch(const std::shared_ptr<OctreeCell<Point, Point, double> >  childs[8], Point &nodeData) const override {
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
         for (int i = 0; i < 8; ++i) {
@@ -93,16 +93,16 @@ public:
 
 class OctreePointVisitorThreaded : public OctreeVisitorThreaded<Point, Point, double> {
 
-    virtual void visitPreBranch(const OctreeCell<Point, Point, double> * const childs[8], Point &nodeData) const override {
+    virtual void visitPreBranch(const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8], Point &nodeData) const override {
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
     }
 
-    virtual void visitPostRoot(const OctreeCell<Point, Point, double> * rootCell) const override {
+    virtual void visitPostRoot(const std::shared_ptr<OctreeCell<Point, Point, double> > rootCell) const override {
         testPoint = rootCell->getNodeData();
     }
 
-    virtual void visitPostBranch(const OctreeCell<Point, Point, double> * const childs[8], Point &nodeData) const override {
+    virtual void visitPostBranch(const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8], Point &nodeData) const override {
         for (int i = 0; i < 8; ++i) {
             nodeData.mass += childs[i]->getNodeData().mass;
             nodeData.position += childs[i]->getNodeData().position * childs[i]->getNodeData().mass;

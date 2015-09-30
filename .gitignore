@@ -164,3 +164,6 @@ $RECYCLE.BIN/
 *.gcov
 
 *.dSYM
+
+err.xml
+CodeAnalysisReport/
