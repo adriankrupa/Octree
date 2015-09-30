@@ -22,16 +22,9 @@ matrix:
           packages:
             - ['g++-4.9']
             - ['libglm-dev']
-            - ['python3']
-            - ['lcov']
       env: CXX=g++-4.9
       before_install:
         - CXX=g++-4.9
-        - alias gcov=gcov-5
-        - pip install --user requests[security]
-        - pip install --user cpp-coveralls
-      after_success:
-        - coveralls --gcov gcov-4.9 --exclude gtest --verbose --gcov-options '\-lp'
 
     - os: linux
       compiler: gcc
@@ -41,9 +34,18 @@ matrix:
           packages:
             - ['g++-5']
             - ['libglm-dev']
+            - ['python3']
+            - ['lcov']
       env: CXX=g++-5
       before_install:
-        - CXX=g++-5
+        - CXX=g++-5 V='Code coverage'
+        - alias gcov=gcov-5
+        - pip install --user requests[security]
+        - pip install --user cpp-coveralls
+      after_success:
+        - coveralls --gcov gcov-5 --exclude gtest --verbose --gcov-options '\-lp'
+      script:
+        - make clear test run POINTS=10000
 
     - os: linux
       compiler: clang++-3.5
@@ -96,4 +98,4 @@ matrix:
         - CXX=clang++ V='Apple LLVM 7.0.0'
 
 script:
-  - make clear test run POINTS=10000
+  - make clear test run POINTS=1000000

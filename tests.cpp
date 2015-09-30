@@ -826,7 +826,7 @@ TEST_F (OctreeTests, PerformanceDenseInsertAdjustTests) {
     ASSERT_TRUE(*oAdjust == *o2Adjust);
     delete []p;
 }
-/*
+
 TEST_F (OctreeTests, PerformanceSparseVisitTests) {
     o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 0);
     o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
@@ -1064,7 +1064,7 @@ TEST_F (OctreeTests, PerformanceDenseVisitAdjustTests) {
 
     delete []p;
 }
-*/
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
