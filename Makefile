@@ -3,7 +3,7 @@ POINTS ?= 100000
 INCLUDES = -I .
 CXXFLAGS = -std=c++11 -pthread -Wall -Wno-unknown-pragmas
 CXXFLAGS_DEBUG = -g -O0 --coverage --pedantic
-CXXFLAGS_RELEASE = -O3 --pedantic
+CXXFLAGS_RELEASE = -O3
 
 test: tests.o gtest-all.o
 	$(CXX) --version
@@ -37,4 +37,3 @@ clear:
 cppCheck:
 	cppcheck --enable=all --force --language=c++ --xml --verbose -f tests.cpp Octree.h  2> err.xml
 	cppcheck-htmlreport --file err.xml --report-dir="CodeAnalysisReport" --title="Octree"
-	

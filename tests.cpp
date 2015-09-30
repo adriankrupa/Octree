@@ -619,7 +619,7 @@ TEST_F (OctreeTests, LockTest) {
 
 TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     o = new Octree<Point, Point, double>(1);
-    o2 = new Octree<Point, Point, double>(1,0);
+    o2 = new Octree<Point, Point, double>(1, 0);
     OctreePointAgent agent;
     OctreePointVisitor visitor;
     OctreePointVisitorThreaded visitorThreaded;

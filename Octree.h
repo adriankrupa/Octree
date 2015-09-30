@@ -783,6 +783,7 @@ namespace AKOctree3 {
 
                             int fromNode = fromGeneral/8;
                             int toNode = toGeneral/8;
+                            printf("FromGeneral %d toGeneral %d fromNode %d toNode %d\n", fromGeneral, toGeneral, fromNode, toNode);
                             if(fromNode == toNode) {
                                 from[i][0] = fromGeneral - fromNode * 8;
                                 to[i][0] = toGeneral - toNode * 8;
