@@ -34,11 +34,23 @@ matrix:
           packages:
             - ['g++-5']
             - ['libglm-dev']
-            - ['python3']
-            - ['lcov']
       env: CXX=g++-5
       before_install:
-        - CXX=g++-5 V='Code coverage'
+        - CXX=g++-5
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages:
+            - ['g++-5']
+            - ['libglm-dev']
+            - ['python3']
+            - ['lcov']
+      env: CXX=g++-5 V='Code coverage'
+      before_install:
+        - CXX=g++-5
         - alias gcov=gcov-5
         - pip install --user requests[security]
         - pip install --user cpp-coveralls
