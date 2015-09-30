@@ -42,7 +42,6 @@
 
 namespace AKOctree3 {
 
-    std::hash<std::thread::id> hasher;
 
 #define OctreeTemplate template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
 

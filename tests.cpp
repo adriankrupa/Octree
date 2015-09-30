@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <glm/glm.hpp>
-#include <fstream>
-#include <iostream>
 
 #include "gtest/gtest.h"
 #include "Octree.h"
@@ -15,7 +13,7 @@ struct Point {
 
 unsigned int points = POINTS;
 Point testPoint;
-
+/*
 class OctreePointAgent : public OctreeAgent<Point, Point, double> {
 
 public:
@@ -137,7 +135,7 @@ public:
         return s;
     }
 };
-
+*/
 class OctreeTests : public ::testing::Test {
 
   protected:
@@ -156,7 +154,7 @@ class OctreeTests : public ::testing::Test {
         delete o2;
     }
 };
-
+/*
 TEST_F (OctreeTests, GenerateData) {
     Point *p = new Point[points];
     std::fstream outputFile;
@@ -177,7 +175,7 @@ TEST_F (OctreeTests, GenerateData) {
     outputFile.close();
     delete []p;
 }
-
+*/
 TEST_F (OctreeTests, OctreeDefaultConstructor) {
   o = new Octree<Point, Point, double>(4);
   ASSERT_NE(o, nullptr);
@@ -188,6 +186,7 @@ TEST_F (OctreeTests, OctreMaxItemsPerCellGetter) {
   ASSERT_EQ(4, o->getMaxItemsPerCell());
 }
 
+/*
 TEST_F (OctreeTests, SingleInsertTest) {
     o = new Octree<Point, Point, double>(4);
     OctreePointAgent agent;
@@ -1064,6 +1063,7 @@ TEST_F (OctreeTests, PerformanceDenseVisitAdjustTests) {
 
     delete []p;
 }
+*/
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
