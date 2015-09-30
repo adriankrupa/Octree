@@ -542,7 +542,7 @@ TEST_F (OctreeTests, SamePointInsertTest) {
 
     delete []p;
 }
-/*
+
 TEST_F (OctreeTests, Insert10PointsAtOnceWithThreads) {
     o = new Octree<Point, Point, double>(4, 0);
     o2 = new Octree<Point, Point, double>(4);
@@ -1064,7 +1064,6 @@ TEST_F (OctreeTests, PerformanceDenseVisitAdjustTests) {
 
     delete []p;
 }
-*/
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
