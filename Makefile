@@ -21,4 +21,4 @@ valgrind:
 	valgrind --leak-check=full --track-origins=yes --dsymutil=yes --show-reachable=yes --error-exitcode=1 ./Octree.out
 
 clear:
-	rm -rf Octree.out tests.o gtest-all.o
+	rm -rf Octree.out tests.o gtest-all.o *.gc*

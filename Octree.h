@@ -96,51 +96,6 @@ namespace AKOctree3 {
         }
     };
 
-    template<class Precision = float>
-    struct OctreeVec4 {
-        static_assert( std::is_arithmetic<Precision>::value, "Precision must be arithmetic!");
-        Precision x = Precision(0);
-        Precision y = Precision(0);
-        Precision z = Precision(0);
-        Precision w = Precision(0);
-
-        OctreeVec4() : x(0), y(0), z(0), w(0) {}
-        OctreeVec4(Precision x) : x(x), y(x), z(x), w(x) {}
-        OctreeVec4(Precision x, Precision y, Precision z, Precision w) : x(x), y(y), z(z), w(w) {}
-
-        OctreeVec4& operator+=(const OctreeVec4& rhs) {
-            x += rhs.x;
-            y += rhs.y;
-            z += rhs.z;
-            return *this;
-        }
-
-        OctreeVec4& operator-=(const OctreeVec4& rhs) {
-            x -= rhs.x;
-            y -= rhs.y;
-            z -= rhs.z;
-            return *this;
-        }
-
-        friend OctreeVec4 operator/(OctreeVec4 lhs, const Precision& rhs) {
-            lhs.x /= rhs;
-            lhs.y /= rhs;
-            lhs.z /= rhs;
-            lhs.w /= rhs;
-            return lhs;
-        }
-
-        friend OctreeVec4 operator+(OctreeVec4 lhs, const OctreeVec4& rhs) {
-            lhs += rhs;
-            return lhs;
-        }
-
-        friend OctreeVec4 operator-(OctreeVec4 lhs, const OctreeVec4& rhs) {
-            lhs -= rhs;
-            return lhs;
-        }
-    };
-
 #pragma mark OctreeAgent base classes
 
     OctreeTemplate
