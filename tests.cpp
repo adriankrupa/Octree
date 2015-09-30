@@ -197,7 +197,7 @@ TEST_F (OctreeTests, SingleInsertTest) {
     ASSERT_EQ(1, o->getItemsCount());
     delete []p;
 }
-/*
+
 TEST_F (OctreeTests, Insert5Points) {
     o = new Octree<Point, Point, double>(4);
     OctreePointAgent agent;
@@ -541,7 +541,7 @@ TEST_F (OctreeTests, SamePointInsertTest) {
 
     delete []p;
 }
-
+/*
 TEST_F (OctreeTests, Insert10PointsAtOnceWithThreads) {
     o = new Octree<Point, Point, double>(4, 0);
     o2 = new Octree<Point, Point, double>(4);
