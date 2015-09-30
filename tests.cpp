@@ -870,6 +870,7 @@ TEST_F (OctreeTests, PerformanceSparseVisitTests) {
     delete []p;
 }
 */
+/*
 TEST_F (OctreeTests, PerformanceSparseVisitAdjustTests) {
     o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 0);
     o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
@@ -946,7 +947,7 @@ TEST_F (OctreeTests, PerformanceSparseVisitAdjustTests) {
 
     delete []p;
 }
-
+*/
 TEST_F (OctreeTests, PerformanceDenseVisitTests) {
     o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 0);
     o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
