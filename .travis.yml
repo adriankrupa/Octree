@@ -31,7 +31,7 @@ matrix:
         - pip install --user requests[security]
         - pip install --user cpp-coveralls
       after_success:
-        - coveralls --gcov gcov-4.9 --exclude gtest --verbose --gcov-options '\-lp'
+        - coveralls --gcov gcov-4.9 --exclude gtest --include tests.cpp --verbose --gcov-options '\-lp'
 
     - os: linux
       compiler: gcc
