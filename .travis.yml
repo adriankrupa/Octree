@@ -46,6 +46,20 @@ matrix:
           packages:
             - ['g++-5']
             - ['libglm-dev']
+      env: CXX=g++-5 V="Release"
+      before_install:
+        - CXX=g++-5
+      script:
+        - make clear testR run POINTS=1000000
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages:
+            - ['g++-5']
+            - ['libglm-dev']
             - ['python3']
             - ['lcov']
       env: CXX=g++-5 V='Code coverage'
