@@ -784,7 +784,7 @@ namespace AKOctree3 {
                             int toGeneral = std::min<int>(64, (64 * (i+1)) / threadsNumber);
 
                             int fromNode = fromGeneral/8;
-                            int toNode = toGeneral/8;
+                            int toNode = std::min(toGeneral/8, 7);
                             printf("FromGeneral %d toGeneral %d fromNode %d toNode %d\n", fromGeneral, toGeneral, fromNode, toNode);
                             if(fromNode == toNode) {
                                 from[i][0] = fromGeneral - fromNode * 8;
@@ -892,6 +892,7 @@ namespace AKOctree3 {
                     printf("Is not leaf, processing %d %d %d\n", ccc[j], from[j], to[j]);
                     auto childs = threadRoots[j]->getChilds();
                     for (int i = from[j]; i < to[j]; ++i) {
+                        if(childs[i] != nullptr)
                         childs[i]->visit(visitor);
                     }
                 } else {
