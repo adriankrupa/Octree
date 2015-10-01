@@ -619,7 +619,7 @@ TEST_F (OctreeTests, LockTest) {
 
 TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     o = new Octree<Point, Point, double>(1);
-    o2 = new Octree<Point, Point, double>(1, 16);
+    o2 = new Octree<Point, Point, double>(1, 0);
     OctreePointAgent agent;
     OctreePointVisitor visitor;
     OctreePointVisitorThreaded visitorThreaded;
@@ -654,7 +654,6 @@ TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     Point point = testPoint;
     testPoint.mass = 0.0f;
     testPoint.position = glm::vec3(0);
-    o->printTree();
     o2->visit(&visitorThreaded);
     ASSERT_FLOAT_EQ(point.mass, testPoint.mass);
     ASSERT_FLOAT_EQ(point.position.x, testPoint.position.x);

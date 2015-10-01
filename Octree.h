@@ -478,7 +478,6 @@ namespace AKOctree3 {
         void makeBranch(const std::vector<const LeafDataType *> &items,
                         const LeafDataType *item,
                         const OctreeAgentLNP *agent) {
-            //printf("Make branch\n");
             float halfRadius = radius / 2.0f;
             for (int i = 0; i < 8; ++i) {
 
@@ -585,7 +584,6 @@ namespace AKOctree3 {
                 center = (max + min) / Precision(2);
                 radius = std::max(std::abs(center.x - max.x), std::abs(center.y - max.y));
                 radius = std::max(radius, glm::abs(center.z - max.z));
-                //printf("New center: (%lf, %lf, %lf), new radius: %lf\n", center.x, center.y, center.z, radius);
                 root->moveCell(center, radius);
             }
 
@@ -659,7 +657,6 @@ namespace AKOctree3 {
                 center = (max + min) / Precision(2);
                 radius = std::max(std::abs(center.x - max.x), std::abs(center.y - max.y));
                 radius = std::max(radius, glm::abs(center.z - max.z));
-                //printf("New center: (%lf, %lf, %lf), new radius: %lf\n", center.x, center.y, center.z, radius);
                 root->moveCell(center, radius);
 
             }
@@ -785,7 +782,6 @@ namespace AKOctree3 {
 
                             int fromNode = fromGeneral/8;
                             int toNode = std::min(toGeneral/8, 7);
-                            printf("FromGeneral %d toGeneral %d fromNode %d toNode %d\n", fromGeneral, toGeneral, fromNode, toNode);
                             if(fromNode == toNode) {
                                 from[i][0] = fromGeneral - fromNode * 8;
                                 to[i][0] = toGeneral - toNode * 8;
@@ -880,23 +876,16 @@ namespace AKOctree3 {
                          int* ccc,
                          int size) const {
 
-            if(size == 1) {
-                printf("Processing %d from %d to %d\n", ccc[0], from[0], to[0]);
-            } else {
-                printf("Processing %d and %d from %d to %d and %d to %d\n", ccc[0], ccc[1], from[0], to[0], from[1], to[1]);
-            }
             for (int j = 0; j < size; ++j) {
                 if(from[j] == to[j])
                     continue;
                 if(!threadRoots[j]->isLeaf()) {
-                    printf("Is not leaf, processing %d %d %d\n", ccc[j], from[j], to[j]);
                     auto childs = threadRoots[j]->getChilds();
                     for (int i = from[j]; i < to[j]; ++i) {
                         if(childs[i] != nullptr)
                         childs[i]->visit(visitor);
                     }
                 } else {
-                    printf("Is leaf,processing %d %d %d\n", ccc[j], from[j], to[j]);
                     visitor->visitLeaf(threadRoots[j]->getData(), threadRoots[j]->getNodeData());
                 }
             }
