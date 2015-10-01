@@ -29,7 +29,7 @@ run:
 	./Octree.out
 
 valgrind:
-	valgrind --leak-check=full --errors-for-leak-kinds=definite --track-origins=yes --dsymutil=yes --show-reachable=yes --error-exitcode=1 ./Octree.out
+	valgrind --leak-check=full --track-origins=yes --dsymutil=yes --show-reachable=yes --error-exitcode=0 ./Octree.out
 
 clear:
 	rm -rf Octree.out *.o *.gc*
