@@ -753,13 +753,15 @@ namespace AKOctree3 {
                     visitor->visitPreBranch(root->getChilds(), root->getNodeData());
                     int from[16][2];
                     int to[16][2];
+                    int ccc[16][2];
                     std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > roots[16][2];
                     if(threadsNumber <= 8) {
                         roots[0][0] = root;
                         for (unsigned int i = 0; i < threadsNumber; ++i) {
                             from[i][0] = (8 * i) / threadsNumber;
                             to[i][0] = std::min<int>(8, (8 * (i+1)) / threadsNumber);
-                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[0]), std::ref(from[i]), std::ref(to[i]), 1));
+                            ccc[i][0] = i;
+                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[0]), std::ref(from[i]), std::ref(to[i]), std::ref(ccc[i]), 1));
                         }
                         for (unsigned int i = 0; i < threadsNumber; ++i) {
                             threads[i].join();
@@ -788,7 +790,8 @@ namespace AKOctree3 {
                                 from[i][0] = fromGeneral - fromNode * 8;
                                 to[i][0] = toGeneral - toNode * 8;
                                 roots[i][0] = childs[fromNode];
-                                threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 1));
+                                ccc[i][0] = fromNode;
+                                threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), std::ref(ccc[i]), 1));
                             } else {
                                 from[i][0] = fromGeneral - fromNode * 8;
                                 to[i][0] = 8;
@@ -796,7 +799,9 @@ namespace AKOctree3 {
                                 to[i][1] = toGeneral - toNode * 8;
                                 roots[i][0] = childs[fromNode];
                                 roots[i][1] = childs[toNode];
-                                threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 2));
+                                ccc[i][0] = fromNode;
+                                ccc[i][1] = toNode;
+                                threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), std::ref(ccc[i]), 2));
                             }
                         }
 
@@ -872,20 +877,25 @@ namespace AKOctree3 {
                          std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > threadRoots[2],
                          int* from,
                          int* to,
+                         int* ccc,
                          int size) const {
 
-            printf("Starting visiting threads\n");
+            if(size == 1) {
+                printf("Processing %d from %d to %d\n", ccc[0], from[0], to[0]);
+            } else {
+                printf("Processing %d and %d from %d to %d and %d to %d\n", ccc[0], ccc[1], from[0], to[0], from[1], to[1]);
+            }
             for (int j = 0; j < size; ++j) {
                 if(from[j] == to[j])
                     continue;
                 if(!threadRoots[j]->isLeaf()) {
-                    printf("Is not leaf, processing\n");
+                    printf("Is not leaf, processing %d %d %d\n", ccc[j], from[j], to[j]);
                     auto childs = threadRoots[j]->getChilds();
                     for (int i = from[j]; i < to[j]; ++i) {
                         childs[i]->visit(visitor);
                     }
                 } else {
-                    printf("Is leaf,processing\n");
+                    printf("Is leaf,processing %d %d %d\n", ccc[j], from[j], to[j]);
                     visitor->visitLeaf(threadRoots[j]->getData(), threadRoots[j]->getNodeData());
                 }
             }
