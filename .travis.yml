@@ -79,11 +79,11 @@ matrix:
         apt:
           sources: ['ubuntu-toolchain-r-test']
           packages:
-            - ['g++-4.8']
+            - ['g++-5']
             - ['libglm-dev']
             - ['valgrind']
-      env: CXX=g++-4.8 V='Valgrind'
-      before_install: CXX=g++-4.8
+      env: CXX=g++-5 V='Valgrind'
+      before_install: CXX=g++-5
       script:
         - make clear test valgrind POINTS=1000
 

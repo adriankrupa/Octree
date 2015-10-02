@@ -1,0 +1,8 @@
+{
+   <PointerToVector>
+   Memcheck:Leak
+   ...
+   fun:_ZNSt6vectorIPK5PointSaIS2_EE9push_backERKS2_
+   fun:_ZN9AKOctree310OctreeCellI5PointS1_dE6insertEPKS1_PKNS_11OctreeAgentIS1_S1_dEE
+   ...
+}

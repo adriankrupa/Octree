@@ -743,6 +743,10 @@ TEST_F (OctreeTests, PerformanceSparseInsertAdjustTests) {
     ASSERT_EQ(oAdjust->forceGetItemsCount(), o2Adjust->forceGetItemsCount());
     ASSERT_TRUE(*o == *o2);
     ASSERT_TRUE(*oAdjust == *o2Adjust);
+
+    delete oAdjust;
+    delete o2Adjust;
+
     delete []p;
 }
 
@@ -824,6 +828,10 @@ TEST_F (OctreeTests, PerformanceDenseInsertAdjustTests) {
     ASSERT_EQ(oAdjust->forceGetItemsCount(), o2Adjust->forceGetItemsCount());
     ASSERT_TRUE(*o == *o2);
     ASSERT_TRUE(*oAdjust == *o2Adjust);
+
+    delete oAdjust;
+    delete o2Adjust;
+
     delete []p;
 }
 
@@ -944,6 +952,9 @@ TEST_F (OctreeTests, PerformanceSparseVisitAdjustTests) {
     ASSERT_FLOAT_EQ(point.position.y, testPoint.position.y);
     ASSERT_FLOAT_EQ(point.position.z, testPoint.position.z);
 
+    delete oAdjust;
+    delete o2Adjust;
+
     delete []p;
 }
 
@@ -1061,6 +1072,9 @@ TEST_F (OctreeTests, PerformanceDenseVisitAdjustTests) {
     ASSERT_FLOAT_EQ(point.position.x, testPoint.position.x);
     ASSERT_FLOAT_EQ(point.position.y, testPoint.position.y);
     ASSERT_FLOAT_EQ(point.position.z, testPoint.position.z);
+
+    delete oAdjust;
+    delete o2Adjust;
 
     delete []p;
 }
