@@ -551,7 +551,7 @@ namespace AKOctree3 {
         }
 
         void clear() {
-            root = std::make_shared<OctreeCell<LeafDataType, NodeDataType, Precision>>(this, center, radius, OctreeCellType::Leaf);
+            root = std::make_shared<OctreeCell<LeafDataType, NodeDataType, Precision>>(maxItemsPerCell, center, radius);
             itemsCount = 0;
         }
 
