@@ -5,7 +5,7 @@
 #include "gtest/gtest.h"
 #include "Octree.h"
 
-using namespace AKOctree3;
+using namespace AKOctree;
 
 struct Point {
   glm::dvec3 position;
