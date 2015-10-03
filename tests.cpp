@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <glm/glm.hpp>
 #include <fstream>
+#include <regex>
 
 #include "gtest/gtest.h"
 #include "Octree.h"
@@ -306,6 +307,23 @@ TEST_F (OctreeTests, Insert5PointsAtOnce) {
     delete []p;
 }
 
+TEST_F (OctreeTests, ClearTest) {
+    o = new Octree<Point, Point, double>(1);
+    OctreePointAgent agent;
+    Point *p = new Point[5];
+    p[0].position = glm::vec3(1,1,1);
+    p[1].position = glm::vec3(2,1,1);
+    p[2].position = glm::vec3(3,1,1);
+    p[3].position = glm::vec3(4,1,1);
+    p[4].position = glm::vec3(5,1,1);
+    o->insert(p, 5, &agent);
+    o->clear();
+    ASSERT_EQ(0, o->getItemsCount());
+    ASSERT_EQ(0, o->forceGetItemsCount());
+
+    delete []p;
+}
+
 TEST_F (OctreeTests, Insert5PointsAtOnceWithAdjust) {
     o = new Octree<Point, Point, double>(1);
     o2 = new Octree<Point, Point, double>(1, OctreeVec3<double>(0),1);
@@ -328,6 +346,34 @@ TEST_F (OctreeTests, Insert5PointsAtOnceWithAdjust) {
     ASSERT_EQ(o->forceGetItemsCount(), o2->forceGetItemsCount());
 
     delete []p;
+}
+
+TEST_F (OctreeTests, Insert5PointsWithVectoreWithAdjust) {
+    o = new Octree<Point, Point, double>(1);
+    o2 = new Octree<Point, Point, double>(1, OctreeVec3<double>(0),1);
+    OctreePointAgent agent;
+    OctreePointAgentAdjust agentAdjust;
+    std::vector<Point> points;
+    Point p;
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points[0].position = glm::vec3(1,1,1);
+    points[1].position = glm::vec3(2,1,1);
+    points[2].position = glm::vec3(3,1,1);
+    points[3].position = glm::vec3(4,1,1);
+    points[4].position = glm::vec3(5,1,1);
+    o->insert(points, &agent);
+    o2->insert(points, &agentAdjust, true);
+    ASSERT_EQ("3444", o->getItemPath(&points[0]));
+    ASSERT_EQ("3445", o->getItemPath(&points[1]));
+    ASSERT_EQ("3454", o->getItemPath(&points[2]));
+    ASSERT_EQ("34552", o->getItemPath(&points[3]));
+    ASSERT_EQ("34553", o->getItemPath(&points[4]));
+    ASSERT_EQ(5, o->getItemsCount());
+    ASSERT_EQ(o->forceGetItemsCount(), o2->forceGetItemsCount());
 }
 
 TEST_F (OctreeTests, Insert5PointsAtOnceWithVector) {

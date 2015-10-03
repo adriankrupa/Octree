@@ -162,7 +162,7 @@ namespace AKOctree {
     private:
 
         bool getItemPath(const LeafDataType *item, std::string &path) const;
-        void printTreeAndSubtree(unsigned int level) const;
+        std::string getStringRepresentation(unsigned int level) const;
         void printTreeAndSubtreeData(unsigned int level, OctreeNodeDataPrinter<LeafDataType, NodeDataType, Precision> *printer) const;
         bool insert(const LeafDataType *item, const OctreeAgentLNP *agent);
         void moveCell(OctreeVec3<Precision> center, Precision radius);
@@ -233,7 +233,7 @@ namespace AKOctree {
         template <class T>
         void insert(std::vector<LeafDataType> &items, const T *agent);
         std::string getItemPath(LeafDataType *item) const;
-        void printTree() const { root->printTreeAndSubtree(0); }
+        std::string getStringRepresentation() const { return root->getStringRepresentation(0); }
         void printTreeData(OctreeNodeDataPrinter<LeafDataType, NodeDataType, Precision> *printer) const {  root->printTreeAndSubtreeData(0, printer); }
         unsigned int forceGetItemsCount() const { return root->forceCountItems();  }
         void visit(const OctreeVisitor<LeafDataType, NodeDataType, Precision> *visitor) const;
@@ -366,32 +366,34 @@ namespace AKOctree {
     }
 
     OctreeTemplate
-    void OctreeCell<LeafDataType, NodeDataType, Precision>::printTreeAndSubtree(unsigned int level) const {
+    std::string OctreeCell<LeafDataType, NodeDataType, Precision>::getStringRepresentation(unsigned int level) const {
+        std::string s;
         if(internalCellType == OctreeCellType::Leaf) {
-            printf("Leaf, items:%lu ", (unsigned long)data.size());
+            s += "Leaf, items:" + std::to_string(data.size()) + " ";
             for (unsigned int i = 0; i < data.size(); ++i) {
-                printf("%llu ", (unsigned long long) data[i]);
+                s += std::to_string((unsigned long long)data[i]) + " ";
             }
-            printf("\n");
+            s += "\n";
         } else {
-            printf("Branch ");
+            s += "Branch ";
             for (int i = 0; i < 8; ++i) {
                 if (i != 0) {
                     for (unsigned int j = 0; j < level + 1; ++j) {
-                        printf("       ");
+                        s += "       ";
                     }
                     for (unsigned int j = 0; j < level; ++j) {
-                        printf("  ");
+                        s += "  ";
                     }
                 }
-                printf("%d ", i);
+                s += std::to_string(i) + " ";
                 if (childs[i] == nullptr) {
-                    printf("NULL\n");
+                    s += "NULL\n";
                 } else {
-                    childs[i]->printTreeAndSubtree(level + 1);
+                    s += childs[i]->getStringRepresentation(level + 1);
                 }
             }
         }
+        return s;
     }
 
     OctreeTemplate
@@ -636,9 +638,6 @@ namespace AKOctree {
             itemsToAdd.reserve(itemsCount);
             for (unsigned int i = 0; i < itemsCount; ++i) {
                 itemsToAdd.push_back(&items[i]);
-            }
-            if (threadsNumber == 0) {
-                threadsNumber = std::thread::hardware_concurrency();
             }
             for (unsigned int i = 0; i < threadsNumber; ++i) {
                 threads.push_back(std::thread(&Octree::insertThread, this, agentInsert));
