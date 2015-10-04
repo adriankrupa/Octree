@@ -409,6 +409,8 @@ TEST_F (OctreeTests, Insert5PointsAtOnceWithVector) {
     ASSERT_EQ("34553", o->getItemPath(&points[4]));
 }
 
+#ifdef REGEX
+
 TEST_F (OctreeTests, StringRepresentationTest) {
     o = new Octree<Point, Point, double>(1);
     OctreePointAgent agent;
@@ -533,6 +535,8 @@ TEST_F (OctreeTests, StringRepresentationWithMultipleValuesTest) {
 
     ASSERT_TRUE(std::regex_match (s.c_str(), regex));
 }
+
+#endif
 
 TEST_F (OctreeTests, TestVisitSinglePoint) {
     o = new Octree<Point, Point, double>(1);

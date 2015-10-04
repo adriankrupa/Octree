@@ -13,6 +13,8 @@ matrix:
             - ['libglm-dev']
       env: CXX=g++-4.8
       before_install: CXX=g++-4.8
+      script:
+        - make clear test run POINTS=1000000 REGEX=NO_REGEX
 
     - os: linux
       compiler: gcc
@@ -97,6 +99,8 @@ matrix:
             - ['libglm-dev']
       env: CXX=clang++-3.5
       before_install: CXX=clang++-3.5
+      script:
+        - make clear test run POINTS=1000000 REGEX=NO_REGEX
 
     - os: linux
       compiler: clang++-3.6

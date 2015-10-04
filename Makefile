@@ -4,6 +4,7 @@ INCLUDES = -I .
 CXXFLAGS = -std=c++11 -pthread -Wall -Wno-unknown-pragmas
 CXXFLAGS_DEBUG = -g -O0 --coverage --pedantic
 CXXFLAGS_RELEASE = -O3
+REGEX ?= REGEX
 
 test: tests.o gtest-all.o
 	$(CXX) --version
@@ -14,7 +15,7 @@ testR: testsR.o gtest-allR.o
 	$(CXX) $(CXXFLAGS) $(CXXFLAGS_RELEASE) testsR.o gtest-allR.o -o Octree.out
 
 tests.o: tests.cpp Octree.h
-	$(CXX) -c $(CXXFLAGS) $(CXXFLAGS_DEBUG) -DPOINTS=${POINTS} $(INCLUDES) $< -o $@
+	$(CXX) -c $(CXXFLAGS) $(CXXFLAGS_DEBUG) -DPOINTS=${POINTS} -D${REGEX} $(INCLUDES) $< -o $@
 
 gtest-all.o: gtest/gtest-all.cc
 	$(CXX) -c $(CXXFLAGS) $(CXXFLAGS_DEBUG) $(INCLUDES) $< -o $@
