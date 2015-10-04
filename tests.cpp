@@ -386,17 +386,152 @@ TEST_F (OctreeTests, Insert5PointsAtOnceWithVector) {
     points.push_back(p);
     points.push_back(p);
     points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
     points[0].position = glm::vec3(1,1,1);
     points[1].position = glm::vec3(2,1,1);
     points[2].position = glm::vec3(3,1,1);
     points[3].position = glm::vec3(4,1,1);
     points[4].position = glm::vec3(5,1,1);
+    points[5].position = glm::vec3(6,1,1);
+    points[6].position = glm::vec3(7,1,1);
+    points[7].position = glm::vec3(8,1,1);
+    points[8].position = glm::vec3(9,1,1);
+    points[9].position = glm::vec3(10,1,1);
     o->insert(points, &agent);
     ASSERT_EQ("3444", o->getItemPath(&points[0]));
     ASSERT_EQ("3445", o->getItemPath(&points[1]));
     ASSERT_EQ("3454", o->getItemPath(&points[2]));
     ASSERT_EQ("34552", o->getItemPath(&points[3]));
     ASSERT_EQ("34553", o->getItemPath(&points[4]));
+}
+
+TEST_F (OctreeTests, StringRepresentationTest) {
+    o = new Octree<Point, Point, double>(1);
+    OctreePointAgent agent;
+    std::vector<Point> points;
+    Point p;
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points[0].position = glm::vec3(1,1,1);
+    points[1].position = glm::vec3(2,1,1);
+    points[2].position = glm::vec3(3,1,1);
+    points[3].position = glm::vec3(4,1,1);
+    points[4].position = glm::vec3(5,1,1);
+    o->insert(points, &agent);
+    std::string s = o -> getStringRepresentation();
+
+    auto regex = std::regex("Branch 0 Leaf, items:0\n"
+                                    "       1 Leaf, items:0\n"
+                                    "       2 Leaf, items:0\n"
+                                    "       3 Branch 0 Leaf, items:0\n"
+                                    "                1 Leaf, items:0\n"
+                                    "                2 Leaf, items:0\n"
+                                    "                3 Leaf, items:0\n"
+                                    "                4 Branch 0 Leaf, items:0\n"
+                                    "                         1 Leaf, items:0\n"
+                                    "                         2 Leaf, items:0\n"
+                                    "                         3 Leaf, items:0\n"
+                                    "                         4 Branch 0 Leaf, items:0\n"
+                                    "                                  1 Leaf, items:0\n"
+                                    "                                  2 Leaf, items:0\n"
+                                    "                                  3 Leaf, items:0\n"
+                                    "                                  4 Leaf, items:1 [0-9]+\n"
+                                    "                                  5 Leaf, items:1 [0-9]+\n"
+                                    "                                  6 Leaf, items:0\n"
+                                    "                                  7 Leaf, items:0\n"
+                                    "                         5 Branch 0 Leaf, items:0\n"
+                                    "                                  1 Leaf, items:0\n"
+                                    "                                  2 Leaf, items:0\n"
+                                    "                                  3 Leaf, items:0\n"
+                                    "                                  4 Leaf, items:1 [0-9]+\n"
+                                    "                                  5 Branch 0 Leaf, items:0\n"
+                                    "                                           1 Leaf, items:0\n"
+                                    "                                           2 Leaf, items:1 [0-9]+\n"
+                                    "                                           3 Leaf, items:1 [0-9]+\n"
+                                    "                                           4 Leaf, items:0\n"
+                                    "                                           5 Leaf, items:0\n"
+                                    "                                           6 Leaf, items:0\n"
+                                    "                                           7 Leaf, items:0\n"
+                                    "                                  6 Leaf, items:0\n"
+                                    "                                  7 Leaf, items:0\n"
+                                    "                         6 Leaf, items:0\n"
+                                    "                         7 Leaf, items:0\n"
+                                    "                5 Leaf, items:0\n"
+                                    "                6 Leaf, items:0\n"
+                                    "                7 Leaf, items:0\n"
+                                    "       4 Leaf, items:0\n"
+                                    "       5 Leaf, items:0\n"
+                                    "       6 Leaf, items:0\n"
+                                    "       7 Leaf, items:0\n");
+    ASSERT_TRUE(std::regex_match (s.c_str(), regex));
+}
+
+TEST_F (OctreeTests, StringRepresentationWithMultipleValuesTest) {
+    o = new Octree<Point, Point, double>(4);
+    OctreePointAgent agent;
+    std::vector<Point> points;
+    Point p;
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points.push_back(p);
+    points[0].position = glm::vec3(1,1,1);
+    points[1].position = glm::vec3(2,1,1);
+    points[2].position = glm::vec3(3,1,1);
+    points[3].position = glm::vec3(4,1,1);
+    points[4].position = glm::vec3(5,1,1);
+    points[5].position = glm::vec3(6,1,1);
+    points[6].position = glm::vec3(7,1,1);
+    points[7].position = glm::vec3(8,1,1);
+    points[8].position = glm::vec3(9,1,1);
+    points[9].position = glm::vec3(10,1,1);
+    o->insert(points, &agent);
+    std::string s = o -> getStringRepresentation();
+
+    auto regex = std::regex("Branch 0 Leaf, items:0\n"
+                                    "       1 Leaf, items:0\n"
+                                    "       2 Leaf, items:0\n"
+                                    "       3 Branch 0 Leaf, items:0\n"
+                                    "                1 Leaf, items:0\n"
+                                    "                2 Leaf, items:0\n"
+                                    "                3 Leaf, items:0\n"
+                                    "                4 Branch 0 Leaf, items:0\n"
+                                    "                         1 Leaf, items:0\n"
+                                    "                         2 Leaf, items:0\n"
+                                    "                         3 Leaf, items:0\n"
+                                    "                         4 Leaf, items:2 [0-9]+ [0-9]+\n"
+                                    "                         5 Leaf, items:3 [0-9]+ [0-9]+ [0-9]+\n"
+                                    "                         6 Leaf, items:0\n"
+                                    "                         7 Leaf, items:0\n"
+                                    "                5 Branch 0 Leaf, items:0\n"
+                                    "                         1 Leaf, items:0\n"
+                                    "                         2 Leaf, items:0\n"
+                                    "                         3 Leaf, items:0\n"
+                                    "                         4 Leaf, items:2 [0-9]+ [0-9]+\n"
+                                    "                         5 Leaf, items:3 [0-9]+ [0-9]+ [0-9]+\n"
+                                    "                         6 Leaf, items:0\n"
+                                    "                         7 Leaf, items:0\n"
+                                    "                6 Leaf, items:0\n"
+                                    "                7 Leaf, items:0\n"
+                                    "       4 Leaf, items:0\n"
+                                    "       5 Leaf, items:0\n"
+                                    "       6 Leaf, items:0\n"
+                                    "       7 Leaf, items:0\n");
+
+    ASSERT_TRUE(std::regex_match (s.c_str(), regex));
 }
 
 TEST_F (OctreeTests, TestVisitSinglePoint) {

@@ -369,9 +369,9 @@ namespace AKOctree {
     std::string OctreeCell<LeafDataType, NodeDataType, Precision>::getStringRepresentation(unsigned int level) const {
         std::string s;
         if(internalCellType == OctreeCellType::Leaf) {
-            s += "Leaf, items:" + std::to_string(data.size()) + " ";
+            s += "Leaf, items:" + std::to_string(data.size());
             for (unsigned int i = 0; i < data.size(); ++i) {
-                s += std::to_string((unsigned long long)data[i]) + " ";
+                s += " " + std::to_string((unsigned long long)data[i]);
             }
             s += "\n";
         } else {
@@ -385,12 +385,7 @@ namespace AKOctree {
                         s += "  ";
                     }
                 }
-                s += std::to_string(i) + " ";
-                if (childs[i] == nullptr) {
-                    s += "NULL\n";
-                } else {
-                    s += childs[i]->getStringRepresentation(level + 1);
-                }
+                s += std::to_string(i) + " " + childs[i]->getStringRepresentation(level + 1);
             }
         }
         return s;
