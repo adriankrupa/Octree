@@ -65,7 +65,9 @@ public:
         testPoint = rootCell->getNodeData();
     }
 
-    virtual void visitBranch(const std::shared_ptr<OctreeCell<Point, Point, double> >  childs[8], Point &nodeData) const override {
+    virtual void visitBranch(const OctreeCell<Point, Point, double> * cell,
+                             const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8]) const override {
+        auto& nodeData = cell -> getNodeData();
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
         for (int i = 0; i < 8; ++i) {
@@ -78,7 +80,9 @@ public:
         }
     }
 
-    virtual void  visitLeaf  ( const std::vector<const Point*>& items, Point& nodeData) const override {
+    virtual void visitLeaf(const OctreeCell<Point, Point, double> * cell,
+                           const std::vector<const Point*>& items) const override {
+        auto& nodeData = cell -> getNodeData();
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
         for (unsigned int i = 0; i < items.size(); ++i) {
@@ -94,7 +98,9 @@ public:
 
 class OctreePointVisitorThreaded : public OctreeVisitorThreaded<Point, Point, double> {
 
-    virtual void visitPreBranch(const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8], Point &nodeData) const override {
+    virtual void visitPreBranch(const OctreeCell<Point, Point, double> * cell,
+                                const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8]) const override {
+        auto& nodeData = cell -> getNodeData();
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
     }
@@ -103,7 +109,9 @@ class OctreePointVisitorThreaded : public OctreeVisitorThreaded<Point, Point, do
         testPoint = rootCell->getNodeData();
     }
 
-    virtual void visitPostBranch(const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8], Point &nodeData) const override {
+    virtual void visitPostBranch(const OctreeCell<Point, Point, double> * cell,
+                                 const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8]) const override {
+        auto& nodeData = cell -> getNodeData();
         for (int i = 0; i < 8; ++i) {
             nodeData.mass += childs[i]->getNodeData().mass;
             nodeData.position += childs[i]->getNodeData().position * childs[i]->getNodeData().mass;
@@ -113,7 +121,52 @@ class OctreePointVisitorThreaded : public OctreeVisitorThreaded<Point, Point, do
         }
     }
 
-    virtual void visitLeaf(const std::vector<const Point *> &items, Point &nodeData) const override {
+    virtual void visitLeaf(const OctreeCell<Point, Point, double> * cell,
+                           const std::vector<const Point *> &items) const override {
+        auto& nodeData = cell -> getNodeData();
+        nodeData.mass = 0.0f;
+        nodeData.position = glm::vec3(0);
+        for (unsigned int i = 0; i < items.size(); ++i) {
+            nodeData.mass += items[i]->mass;
+            nodeData.position += items[i]->mass * items[i]->position;
+        }
+
+        if (nodeData.mass > 0.0f) {
+            nodeData.position /= nodeData.mass;
+        }
+    }
+};
+
+class OctreePointVisitorWithBreak : public OctreeVisitor<Point, Point, double> {
+public:
+
+    float breakThreshold = 1.0f;
+
+    virtual void visitRoot(const std::shared_ptr<OctreeCell<Point, Point, double> > rootCell) const override {
+        ContinueVisit(rootCell);
+        testPoint = rootCell->getNodeData();
+    }
+
+    virtual void visitBranch(const OctreeCell<Point, Point, double> * cell,
+                             const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8]) const override {
+        auto& nodeData = cell -> getNodeData();
+        nodeData.mass = 0.0f;
+        nodeData.position = glm::vec3(0);
+        for (int i = 0; i < 8; ++i) {
+            if(childs[i]->getRadius() > breakThreshold) {
+                ContinueVisit(childs[i]);
+                nodeData.mass += childs[i]->getNodeData().mass;
+                nodeData.position += childs[i]->getNodeData().position * childs[i]->getNodeData().mass;
+            }
+        }
+        if (nodeData.mass > 0.0f) {
+            nodeData.position /= nodeData.mass;
+        }
+    }
+
+    virtual void visitLeaf(const OctreeCell<Point, Point, double> * cell,
+                           const std::vector<const Point*>& items) const override {
+        auto& nodeData = cell -> getNodeData();
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
         for (unsigned int i = 0; i < items.size(); ++i) {
@@ -187,7 +240,6 @@ TEST_F (OctreeTests, OctreMaxItemsPerCellGetter) {
   o = new Octree<Point, Point, double>(4);
   ASSERT_EQ(4, o->getMaxItemsPerCell());
 }
-
 
 TEST_F (OctreeTests, SingleInsertTest) {
     o = new Octree<Point, Point, double>(4);
@@ -386,21 +438,11 @@ TEST_F (OctreeTests, Insert5PointsAtOnceWithVector) {
     points.push_back(p);
     points.push_back(p);
     points.push_back(p);
-    points.push_back(p);
-    points.push_back(p);
-    points.push_back(p);
-    points.push_back(p);
-    points.push_back(p);
     points[0].position = glm::vec3(1,1,1);
     points[1].position = glm::vec3(2,1,1);
     points[2].position = glm::vec3(3,1,1);
     points[3].position = glm::vec3(4,1,1);
     points[4].position = glm::vec3(5,1,1);
-    points[5].position = glm::vec3(6,1,1);
-    points[6].position = glm::vec3(7,1,1);
-    points[7].position = glm::vec3(8,1,1);
-    points[8].position = glm::vec3(9,1,1);
-    points[9].position = glm::vec3(10,1,1);
     o->insert(points, &agent);
     ASSERT_EQ("3444", o->getItemPath(&points[0]));
     ASSERT_EQ("3445", o->getItemPath(&points[1]));
@@ -597,6 +639,25 @@ TEST_F (OctreeTests, TestVisit5Points) {
     ASSERT_FLOAT_EQ(7.0f/17.0f, testPoint.position.z);
 
     delete []p;
+}
+
+TEST_F (OctreeTests, TestVisit10PointsWithBreak) {
+    o = new Octree<Point, Point, double>(2, OctreeVec3<double>(0), 10);
+    OctreePointAgent agent;
+    OctreePointVisitorWithBreak visitor;
+    std::vector<Point> points;
+    Point p;
+    for(int i=0; i<10; i++) {
+        points.push_back(p);
+        points[i].position = glm::vec3(i+1,1,1);
+        points[i].mass = i+1;
+    }
+    o->insert(points, &agent);
+    o->visit(&visitor);
+    ASSERT_FLOAT_EQ(16.0f, testPoint.mass);
+    ASSERT_FLOAT_EQ(90.0f/16.0f, testPoint.position.x);
+    ASSERT_FLOAT_EQ(1.0f, testPoint.position.y);
+    ASSERT_FLOAT_EQ(1.0f, testPoint.position.z);
 }
 
 TEST_F (OctreeTests, EqualityOperatorTest) {
@@ -1263,7 +1324,6 @@ TEST_F (OctreeTests, PerformanceDenseVisitAdjustTests) {
 
     delete []p;
 }
-
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

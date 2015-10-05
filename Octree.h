@@ -91,8 +91,10 @@ namespace AKOctree {
         virtual ~OctreeVisitor() {}
 
         virtual void visitRoot(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > rootCell) const;
-        virtual void visitBranch(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8], NodeDataType &nodeData) const;
-        virtual void visitLeaf(const std::vector<const LeafDataType *> &items, NodeDataType &nodeData) const;
+        virtual void visitBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * const cell,
+                                 const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const;
+        virtual void visitLeaf(const OctreeCell<LeafDataType, NodeDataType, Precision> * const cell,
+                               const std::vector<const LeafDataType *> &items) const;
 
     protected:
         OctreeVisitor() {}
@@ -111,17 +113,26 @@ namespace AKOctree {
     public:
         virtual ~OctreeVisitorThreaded() {}
         virtual void visitPreRoot(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > rootCell) const {}
-        virtual void visitPreBranch(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8], NodeDataType &nodeData) const {}
+
+        virtual void visitPreBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
+                                    const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const {}
+
         virtual void visitPostRoot(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > rootCell) const {}
-        virtual void visitPostBranch(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8], NodeDataType &nodeData) const {}
-        virtual void visitLeaf(const std::vector<const LeafDataType *> &items, NodeDataType &nodeData) const {}
+
+        virtual void visitPostBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
+                                     const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const {}
+
+        virtual void visitLeaf(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
+                               const std::vector<const LeafDataType *> &items) const {}
 
     protected:
         OctreeVisitorThreaded() {}
 
     private:
         void visitRoot(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > rootCell) const;
-        void visitBranch(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8], NodeDataType &nodeData) const;
+
+        void visitBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
+                         const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const;
     };
 
     enum class OctreeCellType {
@@ -151,13 +162,17 @@ namespace AKOctree {
         OctreeCell(unsigned int     maxItemsPerCell,
                    OctreeVec3p      center,
                    Precision        radius,
+                   unsigned int     cellIndex = 0,
                    OctreeCellType   cellType = OctreeCellType::Leaf) : maxItemsPerCell(maxItemsPerCell),
                                                                        center(center),
                                                                        radius(radius),
                                                                        cellType(cellType),
+                                                                       cellIndex(cellIndex),
                                                                        internalCellType(cellType) {}
 
         NodeDataType& getNodeData() const;
+        unsigned int getCellIndex() const { return cellIndex; }
+        Precision getRadius() const { return radius; }
 
     private:
 
@@ -184,6 +199,7 @@ namespace AKOctree {
         OctreeVec3p center = OctreeVec3p();
         Precision radius = 0.0f;
         OctreeCellType cellType;
+        const unsigned int cellIndex;
         OctreeCellType internalCellType;
         mutable NodeDataType nodeData;
         std::shared_ptr<OctreeCellLNP> childs[8];
@@ -248,7 +264,6 @@ namespace AKOctree {
                          std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > threadRoots[2],
                          int* from,
                          int* to,
-                         int* ccc,
                          int size) const;
 
 
@@ -308,14 +323,16 @@ namespace AKOctree {
     }
 
     OctreeTemplate
-    void OctreeVisitor<LeafDataType, NodeDataType, Precision>::visitBranch(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8], NodeDataType &nodeData) const {
+    void OctreeVisitor<LeafDataType, NodeDataType, Precision>::visitBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
+                                                                           const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const {
         for (int i = 0; i < 8; ++i) {
             ContinueVisit(childs[i]);
         }
     }
 
     OctreeTemplate
-    void OctreeVisitor<LeafDataType, NodeDataType, Precision>::visitLeaf(const std::vector<const LeafDataType *> &items, NodeDataType &nodeData) const {};
+    void OctreeVisitor<LeafDataType, NodeDataType, Precision>::visitLeaf(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
+                                                                         const std::vector<const LeafDataType *> &items) const {};
 
     OctreeTemplate
     void OctreeVisitor<LeafDataType, NodeDataType, Precision>::ContinueVisit(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > cell) const {
@@ -330,12 +347,13 @@ namespace AKOctree {
     }
 
     OctreeTemplate
-    void OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision>::visitBranch(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8], NodeDataType &nodeData) const {
-        visitPreBranch(childs, nodeData);
+    void OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision>::visitBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
+                                                                                   const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const {
+        visitPreBranch(cell, childs);
         for (int i = 0; i < 8; ++i) {
             childs[i]->visit(this);
         }
-        visitPostBranch(childs, nodeData);
+        visitPostBranch(cell, childs);
     }
 
     OctreeTemplate
@@ -471,18 +489,18 @@ namespace AKOctree {
     OctreeTemplate
     void OctreeCell<LeafDataType, NodeDataType, Precision>::visit(const OctreeVisitorLNP *visitor) const {
         if(internalCellType == OctreeCellType::Leaf) {
-            visitor->visitLeaf(data, this->nodeData);
+            visitor->visitLeaf(this, data);
         } else {
-            visitor->visitBranch(childs, this->nodeData);
+            visitor->visitBranch(this, childs);
         }
     }
 
     OctreeTemplate
     void OctreeCell<LeafDataType, NodeDataType, Precision>::visit(const OctreeVisitorThreadedLNP *visitor) const {
         if(internalCellType == OctreeCellType::Leaf) {
-            visitor->visitLeaf(data, this->nodeData);
+            visitor->visitLeaf(this, data);
         } else {
-            visitor->visitBranch(childs, this->nodeData);
+            visitor->visitBranch(this, childs);
         }
     }
 
@@ -566,7 +584,7 @@ namespace AKOctree {
             OctreeVec3<Precision> newCenter = this->center + OctreeVec3<Precision>(right ? halfRadius : -halfRadius,
                                                                                    up ? halfRadius : -halfRadius,
                                                                                    front ? halfRadius : -halfRadius);
-            childs[i] = std::make_shared<OctreeCellLNP>(maxItemsPerCell, newCenter, halfRadius);
+            childs[i] = std::make_shared<OctreeCellLNP>(maxItemsPerCell, newCenter, halfRadius, i);
         }
         internalCellType = OctreeCellType::Branch;
         for (unsigned int i = 0; i < items.size(); ++i) {
@@ -777,18 +795,16 @@ namespace AKOctree {
             if (root->isLeaf()) {
                 root->visit(visitor);
             } else {
-                visitor->visitPreBranch(root->getChilds(), root->getNodeData());
+                visitor->visitPreBranch(root.get(), root->getChilds());
                 int from[16][2];
                 int to[16][2];
-                int ccc[16][2];
                 std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > roots[16][2];
                 if(threadsNumber <= 8) {
                     roots[0][0] = root;
                     for (unsigned int i = 0; i < threadsNumber; ++i) {
                         from[i][0] = (8 * i) / threadsNumber;
                         to[i][0] = std::min<int>(8, (8 * (i+1)) / threadsNumber);
-                        ccc[i][0] = i;
-                        threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[0]), std::ref(from[i]), std::ref(to[i]), std::ref(ccc[i]), 1));
+                        threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[0]), std::ref(from[i]), std::ref(to[i]), 1));
                     }
                     for (unsigned int i = 0; i < threadsNumber; ++i) {
                         threads[i].join();
@@ -800,9 +816,9 @@ namespace AKOctree {
 
                     for (int i = 0; i < 8; ++i) {
                         if(childs[i]->isLeaf()) {
-                            visitor->visitLeaf(childs[i]->getData(), childs[i]->getNodeData());
+                            visitor->visitLeaf(childs[i].get(), childs[i]->getData());
                         } else {
-                            visitor->visitPreBranch(childs[i]->getChilds(), childs[i]->getNodeData());
+                            visitor->visitPreBranch(childs[i].get(), childs[i]->getChilds());
                         }
                     }
 
@@ -816,8 +832,7 @@ namespace AKOctree {
                             from[i][0] = fromGeneral - fromNode * 8;
                             to[i][0] = toGeneral - toNode * 8;
                             roots[i][0] = childs[fromNode];
-                            ccc[i][0] = fromNode;
-                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), std::ref(ccc[i]), 1));
+                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 1));
                         } else {
                             from[i][0] = fromGeneral - fromNode * 8;
                             to[i][0] = 8;
@@ -825,25 +840,23 @@ namespace AKOctree {
                             to[i][1] = toGeneral - toNode * 8;
                             roots[i][0] = childs[fromNode];
                             roots[i][1] = childs[toNode];
-                            ccc[i][0] = fromNode;
-                            ccc[i][1] = toNode;
-                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), std::ref(ccc[i]), 2));
+                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 2));
                         }
                     }
 
-                    for (unsigned int i = 0; i < threadsNumber; ++i) {
+                    for (unsigned int i = 0; i < threads.size(); ++i) {
                         threads[i].join();
                     }
                     threads.clear();
 
                     for (int i = 0; i < 8; ++i) {
                         if(!childs[i]->isLeaf()) {
-                            visitor->visitPostBranch(childs[i]->getChilds(), childs[i]->getNodeData());
+                            visitor->visitPostBranch(childs[i].get(), childs[i]->getChilds());
                         }
                     }
 
                 }
-                visitor->visitPostBranch(root->getChilds(), root->getNodeData());
+                visitor->visitPostBranch(root.get(), root->getChilds());
             }
 
             visitor->visitPostRoot(root);
@@ -895,7 +908,6 @@ namespace AKOctree {
                                                                     std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > threadRoots[2],
                                                                     int* from,
                                                                     int* to,
-                                                                    int* ccc,
                                                                     int size) const {
 
         for (int j = 0; j < size; ++j) {
@@ -908,7 +920,7 @@ namespace AKOctree {
                         childs[i]->visit(visitor);
                 }
             } else {
-                visitor->visitLeaf(threadRoots[j]->getData(), threadRoots[j]->getNodeData());
+                visitor->visitLeaf(threadRoots[j].get(), threadRoots[j]->getData());
             }
         }
 
