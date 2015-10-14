@@ -25,8 +25,11 @@
 #define __AKOctree__Octree__
 
 #include <vector>
+#include <array>
+#include <algorithm>
 #include <thread>
 #include <mutex>
+#include <numeric>
 
 namespace AKOctree {
 
@@ -115,7 +118,8 @@ namespace AKOctree {
         virtual void visitPreRoot(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > rootCell) const {}
 
         virtual void visitPreBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
-                                    const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const {}
+                                    const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8],
+                                    std::vector<bool>& childsToProcess) const {}
 
         virtual void visitPostRoot(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > rootCell) const {}
 
@@ -201,7 +205,7 @@ namespace AKOctree {
         OctreeCellType cellType;
         const unsigned int cellIndex;
         OctreeCellType internalCellType;
-        mutable NodeDataType nodeData;
+        mutable NodeDataType nodeData = {};
         std::shared_ptr<OctreeCellLNP> childs[8];
         std::vector<const LeafDataType *> data;
         std::mutex nodeMutex;
@@ -261,10 +265,8 @@ namespace AKOctree {
         void insertThread(const OctreeAgent<LeafDataType, NodeDataType, Precision> *agent);
 
         void visitThread(const OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision> *visitor,
-                         std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > threadRoots[2],
-                         int* from,
-                         int* to,
-                         int size) const;
+                         std::array<std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> >, 8 > threadRoots,
+                         std::vector<int> toVisit) const;
 
 
         OctreeVec3<Precision> center = OctreeVec3<Precision>();
@@ -346,12 +348,24 @@ namespace AKOctree {
         visitPostRoot(rootCell);
     }
 
+    std::vector<bool> getArrayOfChildsToProcess() {
+        std::vector<bool> v;
+        v.reserve(8);
+        for (int i = 0; i < 8; ++i) {
+            v.push_back(true);
+        }
+        return v;
+    }
+
     OctreeTemplate
     void OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision>::visitBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
                                                                                    const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const {
-        visitPreBranch(cell, childs);
+        auto childsToProcess = getArrayOfChildsToProcess();
+        visitPreBranch(cell, childs, childsToProcess);
         for (int i = 0; i < 8; ++i) {
-            childs[i]->visit(this);
+            if(childsToProcess[i]) {
+                childs[i]->visit(this);
+            }
         }
         visitPostBranch(cell, childs);
     }
@@ -415,7 +429,7 @@ namespace AKOctree {
             printf("Leaf: %s\n", printer->GetDataString(nodeData).c_str());
         } else {
             printf("Branch ");
-            printf(printer->GetDataString(nodeData).c_str());
+            printf("%s", printer->GetDataString(nodeData).c_str());
             for (int i = 0; i < 8; ++i) {
                 if (i != 0) {
                     for (unsigned int j = 0; j < level + 1; ++j) {
@@ -787,24 +801,39 @@ namespace AKOctree {
         visitor->visitRoot(root);
     }
 
+    void pushRangeIntoVector(std::vector<int>& v, int from, int to) {
+        for (int i = from; i < to; ++i) {
+            v.push_back(i);
+        }
+    }
+
     OctreeTemplate
     void Octree<LeafDataType, NodeDataType, Precision>::visit(const OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision> *visitor) const {
         if (threadsNumber != 1) {
-
             visitor->visitPreRoot(root);
             if (root->isLeaf()) {
                 root->visit(visitor);
             } else {
-                visitor->visitPreBranch(root.get(), root->getChilds());
-                int from[16][2];
-                int to[16][2];
-                std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > roots[16][2];
+                auto childsToVisit = getArrayOfChildsToProcess();
+                visitor->visitPreBranch(root.get(), root->getChilds(), childsToVisit);
+                int childsToVisitCount = std::count_if(childsToVisit.begin(), childsToVisit.end(), [](bool b) {return b;});
+                std::array< std::vector<int>, 16 > toVisit;
+                std::array<std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> >, 8 > roots;
                 if(threadsNumber <= 8) {
-                    roots[0][0] = root;
+                    roots[0] = root;
                     for (unsigned int i = 0; i < threadsNumber; ++i) {
-                        from[i][0] = (8 * i) / threadsNumber;
-                        to[i][0] = std::min<int>(8, (8 * (i+1)) / threadsNumber);
-                        threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[0]), std::ref(from[i]), std::ref(to[i]), 1));
+                        int from = (childsToVisitCount * i) / threadsNumber;
+                        int to = std::min<int>(childsToVisitCount, (childsToVisitCount * (i+1)) / threadsNumber);
+                        int skipped = 0;
+                        for (int j = from; j < to; ++j) {
+                            if(childsToVisit[j+skipped]) {
+                                toVisit[i].push_back(j+skipped);
+                            } else {
+                                j--;
+                                skipped++;
+                            }
+                        }
+                        threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots), std::ref(toVisit[i])));
                     }
                     for (unsigned int i = 0; i < threadsNumber; ++i) {
                         threads[i].join();
@@ -813,35 +842,50 @@ namespace AKOctree {
 
                 } else {
                     auto childs = root->getChilds();
+                    std::array<std::vector<bool>, 8 > childsToProcessArray;
 
                     for (int i = 0; i < 8; ++i) {
+                        childsToProcessArray[i] = getArrayOfChildsToProcess();
+                        roots[i] = childs[i];
+                    }
+                    for (int i = 0; i < 8; ++i) {
+                        if(!childsToVisit[i]) {
+                            for (int j = 0; j < 8; ++j) {
+                                childsToProcessArray[i][j]=false;
+                            }
+                            continue;
+                        }
                         if(childs[i]->isLeaf()) {
                             visitor->visitLeaf(childs[i].get(), childs[i]->getData());
                         } else {
-                            visitor->visitPreBranch(childs[i].get(), childs[i]->getChilds());
+                            visitor->visitPreBranch(childs[i].get(), childs[i]->getChilds(), childsToProcessArray[i]);
                         }
                     }
 
-                    for (unsigned int i = 0; i < threadsNumber; ++i) {
-                        int fromGeneral = (64 * i) / threadsNumber;
-                        int toGeneral = std::min<int>(64, (64 * (i+1)) / threadsNumber);
+                    int numberOfElementsToVisit = std::accumulate(childsToProcessArray.begin(), childsToProcessArray.end(), 0,
+                                                                  [](const int& counter, std::vector<bool> elements) {
+                                                                      return counter + std::count_if(elements.begin(),
+                                                                                                     elements.end(),
+                                                                                                     [](bool b) {return b;});
+                                                                  });
 
-                        int fromNode = fromGeneral/8;
-                        int toNode = std::min(toGeneral/8, 7);
-                        if(fromNode == toNode) {
-                            from[i][0] = fromGeneral - fromNode * 8;
-                            to[i][0] = toGeneral - toNode * 8;
-                            roots[i][0] = childs[fromNode];
-                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 1));
-                        } else {
-                            from[i][0] = fromGeneral - fromNode * 8;
-                            to[i][0] = 8;
-                            from[i][1] = 0;
-                            to[i][1] = toGeneral - toNode * 8;
-                            roots[i][0] = childs[fromNode];
-                            roots[i][1] = childs[toNode];
-                            threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots[i]), std::ref(from[i]), std::ref(to[i]), 2));
+                    int accumulator = 0;
+                    for (unsigned int i = 0; i < threadsNumber; ++i) {
+                        int from = (numberOfElementsToVisit * i) / threadsNumber;
+                        int to = std::min<int>(numberOfElementsToVisit, (numberOfElementsToVisit * (i+1)) / threadsNumber);
+                        int elementsToPush = to-from;
+
+                        for (int j = 0; j < elementsToPush; ++j) {
+                            int rootCellIndex = accumulator/8;
+                            int childCellIndex = accumulator%8;
+                            if(childsToProcessArray[rootCellIndex][childCellIndex]) {
+                                toVisit[i].push_back(accumulator);
+                            } else {
+                                j--;
+                            }
+                            accumulator++;
                         }
+                        threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots), std::ref(toVisit[i])));
                     }
 
                     for (unsigned int i = 0; i < threads.size(); ++i) {
@@ -905,25 +949,20 @@ namespace AKOctree {
 
     OctreeTemplate
     void Octree<LeafDataType, NodeDataType, Precision>::visitThread(const OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision> *visitor,
-                                                                    std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > threadRoots[2],
-                                                                    int* from,
-                                                                    int* to,
-                                                                    int size) const {
+                                                                    std::array<std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> >, 8 > threadRoots,
+                                                                    std::vector<int> toVisit) const {
 
-        for (int j = 0; j < size; ++j) {
-            if(from[j] == to[j])
-                continue;
-            if(!threadRoots[j]->isLeaf()) {
-                auto childs = threadRoots[j]->getChilds();
-                for (int i = from[j]; i < to[j]; ++i) {
-                    if(childs[i] != nullptr)
-                        childs[i]->visit(visitor);
-                }
+        for(auto& index : toVisit) {
+            int rootIndex = index / 8;
+            int cellIndex = index - rootIndex * 8;
+
+            if (!threadRoots[rootIndex]->isLeaf()) {
+                auto childs = threadRoots[rootIndex]->getChilds();
+                childs[cellIndex] -> visit(visitor);
             } else {
-                visitor->visitLeaf(threadRoots[j].get(), threadRoots[j]->getData());
+                visitor->visitLeaf(threadRoots[rootIndex].get(), threadRoots[rootIndex]->getData());
             }
         }
-
     }
 }
 
