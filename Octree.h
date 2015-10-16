@@ -33,14 +33,10 @@
 
 namespace AKOctree {
 
-#define OctreeTemplateDefault template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
-#define OctreeTemplate template<class LeafDataType, class NodeDataType, class Precision>
-#define OctreeTemplateShortened template<class L, class N, class P>
-
-    OctreeTemplate
+    template<class LeafDataType, class NodeDataType, class Precision>
     class Octree;
 
-    OctreeTemplate
+    template<class LeafDataType, class NodeDataType, class Precision>
     class OctreeCell;
 
     template<class Precision = float>
@@ -60,7 +56,7 @@ namespace AKOctree {
         OctreeVec3& operator-=(const OctreeVec3& rhs);
     };
 
-    OctreeTemplateDefault
+    template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
     class OctreeAgent {
     public:
         virtual ~OctreeAgent() {}
@@ -71,7 +67,7 @@ namespace AKOctree {
         OctreeAgent() {}
     };
 
-    OctreeTemplateDefault
+    template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
     class OctreeAgentAutoAdjustExtension {
     public:
         virtual ~OctreeAgentAutoAdjustExtension() {}
@@ -83,13 +79,13 @@ namespace AKOctree {
         OctreeAgentAutoAdjustExtension() {}
     };
 
-    OctreeTemplateDefault
+    template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
     class OctreeNodeDataPrinter {
     public:
         virtual std::string GetDataString(NodeDataType& nodeData) const = 0;
     };
 
-    OctreeTemplateDefault
+    template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
     class OctreeVisitor {
     public:
         virtual ~OctreeVisitor() {}
@@ -105,7 +101,7 @@ namespace AKOctree {
         void ContinueVisit(const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > cell) const;
     };
 
-    OctreeTemplateDefault
+    template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
     class OctreeVisitorThreaded {
 
         template<class L, class N, class P>
@@ -140,7 +136,7 @@ namespace AKOctree {
                          const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const;
     };
 
-    OctreeTemplateDefault
+    template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
     class OctreeCell {
 
         template<class L, class N, class P>
@@ -207,7 +203,7 @@ namespace AKOctree {
         std::mutex nodeMutex;
     };
 
-    OctreeTemplateDefault
+    template<class LeafDataType, class NodeDataType = LeafDataType, class Precision = float>
     class Octree {
 
         static_assert( std::is_arithmetic<Precision>::value, "Precision must be arithmetic!");
@@ -249,6 +245,8 @@ namespace AKOctree {
 
         template <class T>
         void insert(std::vector<LeafDataType> &items, const T *agent);
+        void update(const OctreeAgent<LeafDataType, NodeDataType, Precision> *agent);
+        void update(const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision> *agent);
         std::string getItemPath(LeafDataType *item) const;
         std::string getStringRepresentation() const { return root->getStringRepresentation(0); }
         void printTreeData(OctreeNodeDataPrinter<LeafDataType, NodeDataType, Precision> *printer) const {  root->printTreeAndSubtreeData(0, printer); }
@@ -316,29 +314,30 @@ namespace AKOctree {
         return lhs;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeVisitor<L, N, P>::visitRoot(const std::shared_ptr<OctreeCell<L, N, P> > rootCell) const {
         ContinueVisit(rootCell);
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeVisitor<L, N, P>::visitBranch(const OctreeCell<L, N, P> * cell,
                                              const std::shared_ptr<OctreeCell<L, N, P> > childs[8]) const {
+
         for (int i = 0; i < 8; ++i) {
             ContinueVisit(childs[i]);
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeVisitor<L, N, P>::visitLeaf(const OctreeCell<L, N, P> * cell,
-                                           const std::vector<const L *> &items) const {};
+                                           const std::vector<const L *> &items) const {}
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeVisitor<L, N, P>::ContinueVisit(const std::shared_ptr<OctreeCell<L, N, P> > cell) const {
         cell->visit(this);
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeVisitorThreaded<L, N, P>::visitRoot(const std::shared_ptr<OctreeCell<L, N, P> > rootCell) const {
         visitPreRoot(rootCell);
         rootCell->visit(this);
@@ -351,7 +350,7 @@ namespace AKOctree {
         return a;
     }
 
-    OctreeTemplate
+    template<class LeafDataType, class NodeDataType, class Precision>
     void OctreeVisitorThreaded<LeafDataType, NodeDataType, Precision>::visitBranch(const OctreeCell<LeafDataType, NodeDataType, Precision> * cell,
                                                                                    const std::shared_ptr<OctreeCell<LeafDataType, NodeDataType, Precision> > childs[8]) const {
         auto childsToProcess = getArrayOfChildsToProcess();
@@ -364,12 +363,12 @@ namespace AKOctree {
         visitPostBranch(cell, childs);
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     N& OctreeCell<L, N, P>::getNodeData() const {
         return nodeData;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     bool OctreeCell<L, N, P>::getItemPath(const L *item, std::string &path) const {
         if(internalCellType == OctreeCellType::Leaf) {
             for (auto &it : data) {
@@ -391,7 +390,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     std::string OctreeCell<L, N, P>::getStringRepresentation(unsigned int level) const {
         std::string s;
         if(internalCellType == OctreeCellType::Leaf) {
@@ -417,7 +416,7 @@ namespace AKOctree {
         return s;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeCell<L, N, P>::printTreeAndSubtreeData(unsigned int level, OctreeNodeDataPrinter<L, N, P> *printer) const {
         if(internalCellType == OctreeCellType::Leaf) {
             printf("Leaf: %s\n", printer->GetDataString(nodeData).c_str());
@@ -453,7 +452,7 @@ namespace AKOctree {
                              front ? halfRadius : -halfRadius);
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     bool OctreeCell<L, N, P>::insert(const L *item, const OctreeAgent<L, N, P> *agent) {
         if(internalCellType == OctreeCellType::Leaf) {
             return insertIntoLeaf(item, agent);
@@ -469,7 +468,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     bool OctreeCell<L, N, P>::insertInThread(const L *item, const OctreeAgent<L, N, P> *agent) {
         if(internalCellType == OctreeCellType::Leaf) {
             return insertIntoLeaf(item, agent);
@@ -490,7 +489,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     bool OctreeCell<L, N, P>::insertIntoLeaf(const L *item, const OctreeAgent<L, N, P> *agent) {
         for (unsigned int i = 0; i < data.size(); ++i) {
             if (data[i] == item) {
@@ -506,14 +505,14 @@ namespace AKOctree {
         return true;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeCell<L, N, P>::moveCell(OctreeVec3<P> center, P radius) {
         assert(this->isLeaf());
         this->center = center;
         this->radius = radius;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     unsigned int OctreeCell<L, N, P>::forceCountItems() const {
         if(internalCellType == OctreeCellType::Leaf) {
             return (unsigned int)data.size();
@@ -526,7 +525,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeCell<L, N, P>::visit(const OctreeVisitor<L, N, P> *visitor) const {
         if(internalCellType == OctreeCellType::Leaf) {
             visitor->visitLeaf(this, data);
@@ -535,7 +534,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeCell<L, N, P>::visit(const OctreeVisitorThreaded<L, N, P> *visitor) const {
         if(internalCellType == OctreeCellType::Leaf) {
             visitor->visitLeaf(this, data);
@@ -544,7 +543,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     bool OctreeCell<L, N, P>::isEqual(OctreeCell<L, N, P>  const &rhs) const {
         if(internalCellType != rhs.internalCellType) {
             return false;
@@ -576,7 +575,7 @@ namespace AKOctree {
         return true;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void OctreeCell<L, N, P>::makeBranch(const std::vector<const L *> &items, const L *item, const OctreeAgent<L, N, P> *agent) {
         float halfRadius = radius / 2.0f;
         for (int i = 0; i < 8; ++i) {
@@ -597,7 +596,7 @@ namespace AKOctree {
         cellType = OctreeCellType::Branch;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     Octree<L, N, P>::Octree(unsigned int maxItemsPerCell,
                             OctreeVec3<P> center,
                             P radius,
@@ -611,13 +610,13 @@ namespace AKOctree {
         root = std::make_shared<OctreeCell<L, N, P> >(maxItemsPerCell, center, radius);
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::clear() {
         root = std::make_shared<OctreeCell<L, N, P> >(maxItemsPerCell, center, radius);
         itemsCount = 0;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::insert(const L *item, const OctreeAgent<L, N, P> *agent) {
         if (agent->isItemOverlappingCell(item, center, radius)) {
             if(root->insert(item, agent)) {
@@ -626,7 +625,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::insert(const L *items,
                                  const unsigned int itemsCount,
                                  const OctreeAgent<L, N, P> *agentInsert,
@@ -673,7 +672,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     template <class T>
     void Octree<L, N, P>::insert(const L *items,
                                  const unsigned int itemsCount,
@@ -691,7 +690,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     template <class T>
     void Octree<L, N, P>::insert(const L *items,
                                  const unsigned int itemsCount,
@@ -702,7 +701,7 @@ namespace AKOctree {
         insert(items, itemsCount, agent, adj, adj != nullptr);
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::insert(std::vector<L> &items,
                                  const OctreeAgent<L, N, P> *agentInsert,
                                  const OctreeAgentAutoAdjustExtension<L, N, P> *agentAdjust,
@@ -751,7 +750,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     template <class T>
     void Octree<L, N, P>::insert(std::vector<L> &items, const T *agent, bool autoAdjustTree) {
 
@@ -766,7 +765,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     template <class T>
     void Octree<L, N, P>::insert(std::vector<L> &items, const T *agent) {
 
@@ -775,14 +774,14 @@ namespace AKOctree {
         insert(items, agent, adj, adj != nullptr);
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     std::string Octree<L, N, P>::getItemPath(L *item) const {
         std::string v;
         root->getItemPath(item, v);
         return v;
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::visit(const OctreeVisitor<L, N, P> *visitor) const {
         if (threadsNumber != 1) {
             //printf("WARNING: visiting with multiple tree requires OctreeVisitorThreaded\nUsing 1 thread\n");
@@ -796,7 +795,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::visit(const OctreeVisitorThreaded<L, N, P> *visitor) const {
         if (threadsNumber != 1) {
             visitor->visitPreRoot(root);
@@ -899,7 +898,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::insertThread(const OctreeAgent<L, N, P> *agent) {
         unsigned int itemsToBatch = threadsNumber * threadsNumber;
 
@@ -936,7 +935,7 @@ namespace AKOctree {
         }
     }
 
-    OctreeTemplateShortened //L=LeafDataType N=NodeDataType P=Precision
+    template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::visitThread(const OctreeVisitorThreaded<L, N, P> *visitor,
                                       std::array<std::shared_ptr<OctreeCell<L, N, P> >, 8 > threadRoots,
                                       std::vector<int> toVisit) const {
