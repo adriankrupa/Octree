@@ -9,8 +9,12 @@
 using namespace AKOctree;
 
 struct Point {
-  glm::dvec3 position;
-  double mass;
+    glm::dvec3 position;
+    double mass;
+    inline bool operator == (const Point &b) const
+    {
+        return true;
+    }
 };
 
 unsigned int points = POINTS;

@@ -30,6 +30,8 @@
 #include <thread>
 #include <mutex>
 #include <numeric>
+#include <type_traits>
+#include <functional>
 
 namespace AKOctree {
 
@@ -489,13 +491,42 @@ namespace AKOctree {
         }
     }
 
+    namespace sfinae {
+        template<class>
+        struct sfinae_true : std::true_type {};
+
+        template<class T, class A0>
+        static auto test_equalityOp(int) -> sfinae_true<decltype(*std::declval<T>() == *std::declval<T>())>;
+
+        template<class, class A0>
+        static auto test_equalityOp(long) -> std::false_type;
+
+        template<class T, class L, bool>
+        struct equality {
+            static inline bool isEqual(T t, L l) {return t == l;}
+        };
+
+        template<class T, class L>
+        struct equality<T, L, true> {
+            static inline bool isEqual(T t, L l) {return t == l && *t == *l;}
+        };
+
+        template<class T, class Arg>
+        struct pointer_equality : decltype(test_equalityOp<T, Arg>(0)) {
+            static_assert(std::is_pointer<T>::value && std::is_pointer<Arg>::value, "Template arguments must be pointers");
+
+            static bool isEqual(T t, Arg l) {
+                return equality<T, Arg, decltype(test_equalityOp<T, Arg>(0))::value>::isEqual(t, l);
+            }
+        };
+    }
+
     template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     bool OctreeCell<L, N, P>::insertIntoLeaf(const L *item, const OctreeAgent<L, N, P> *agent) {
         for (unsigned int i = 0; i < data.size(); ++i) {
-            if (data[i] == item) {
+            if (sfinae::pointer_equality<const L*, const L*>::isEqual(item, data[i])) {
                 return false;
             }
-            //TODO: add if(*data[i] == item) if available
         }
         if (maxItemsPerCell <= data.size()) {
             makeBranch(data, item, agent);
