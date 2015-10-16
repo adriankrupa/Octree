@@ -100,7 +100,7 @@ class OctreePointVisitorThreaded : public OctreeVisitorThreaded<Point, Point, do
 
     virtual void visitPreBranch(const OctreeCell<Point, Point, double> * cell,
                                 const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8],
-                                std::vector<bool>& childsToProcess) const override {
+                                std::array<bool, 8>& childsToProcess) const override {
         auto& nodeData = cell -> getNodeData();
         nodeData.mass = 0.0f;
         nodeData.position = glm::vec3(0);
@@ -187,7 +187,7 @@ public:
 
     virtual void visitPreBranch(const OctreeCell<Point, Point, double> * cell,
                                 const std::shared_ptr<OctreeCell<Point, Point, double> > childs[8],
-                                std::vector<bool>& childsToProcess) const override {
+                                std::array<bool, 8>& childsToProcess) const override {
 
         auto& nodeData = cell -> getNodeData();
         nodeData.mass = 0.0f;
@@ -335,6 +335,26 @@ TEST_F (OctreeTests, GetItemsCountTest) {
     p[2].position = glm::vec3(3,1,1);
     p[3].position = glm::vec3(4,1,1);
     p[4].position = glm::vec3(5,1,1);
+    o->insert(&p[0], &agent);
+    o->insert(&p[1], &agent);
+    o->insert(&p[2], &agent);
+    o->insert(&p[3], &agent);
+    o->insert(&p[4], &agent);
+    ASSERT_EQ(5, o->getItemsCount());
+
+    delete []p;
+}
+
+TEST_F (OctreeTests, GetItemsDuplicateCountTest) {
+    o = new Octree<Point, Point, double>(1);
+    OctreePointAgent agent;
+    Point *p = new Point[5];
+    p[0].position = glm::vec3(1,1,1);
+    p[1].position = glm::vec3(2,1,1);
+    p[2].position = glm::vec3(3,1,1);
+    p[3].position = glm::vec3(4,1,1);
+    p[4].position = glm::vec3(5,1,1);
+    o->insert(&p[0], &agent);
     o->insert(&p[0], &agent);
     o->insert(&p[1], &agent);
     o->insert(&p[2], &agent);
@@ -1004,6 +1024,144 @@ TEST_F (OctreeTests, TestVisit5PointsInThreads) {
     ASSERT_FLOAT_EQ(point.position.z, testPoint.position.z);
 
     delete []p;
+}
+
+TEST_F (OctreeTests, InsertThreadsFrom1To16Test) {
+
+    unsigned int pointsToProcess = std::min(points, (unsigned int)200);
+
+    o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 1);
+    o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
+
+    Point *p = new Point[pointsToProcess];
+    OctreePointAgent agent;
+
+    std::fstream outputFile;
+    outputFile.open("test.txt", std::ios::in | std::ios::binary);
+    outputFile.read((char *) p, pointsToProcess * sizeof(Point));
+    outputFile.close();
+
+    o2->insert(p, pointsToProcess, &agent);
+    for (int i = 1; i <= 16; ++i) {
+        o->insert(p, pointsToProcess, &agent);
+        ASSERT_TRUE(*o == *o2);
+        delete o;
+        o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, i+1);
+    }
+}
+
+
+TEST_F (OctreeTests, VisitThreadsFrom1To16Test) {
+
+    unsigned int pointsToProcess = std::min(points, (unsigned int)200);
+
+    o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
+
+    Point *p = new Point[pointsToProcess];
+    OctreePointAgent agent;
+    OctreePointVisitor visitor;
+    OctreePointVisitorThreaded visitorThreaded;
+
+    std::fstream outputFile;
+    outputFile.open("test.txt", std::ios::in | std::ios::binary);
+    outputFile.read((char *) p, pointsToProcess * sizeof(Point));
+    outputFile.close();
+
+    o->insert(p, pointsToProcess, &agent);
+    o->visit(&visitor);
+
+    auto controlPoint = testPoint;
+
+    o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
+    o2->insert(p, pointsToProcess, &agent);
+    testPoint = Point();
+    o2->visit(&visitorThreaded);
+    ASSERT_FLOAT_EQ(controlPoint.mass, testPoint.mass);
+    ASSERT_FLOAT_EQ(controlPoint.position.x, testPoint.position.x);
+    ASSERT_FLOAT_EQ(controlPoint.position.y, testPoint.position.y);
+    ASSERT_FLOAT_EQ(controlPoint.position.z, testPoint.position.z);
+    delete o2;
+
+    o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 1);
+    o2->insert(p, pointsToProcess, &agent);
+    for (int i = 1; i <=16 ; ++i) {
+        testPoint = Point();
+        o2->visit(&visitor);
+        ASSERT_FLOAT_EQ(controlPoint.mass, testPoint.mass);
+        ASSERT_FLOAT_EQ(controlPoint.position.x, testPoint.position.x);
+        ASSERT_FLOAT_EQ(controlPoint.position.y, testPoint.position.y);
+        ASSERT_FLOAT_EQ(controlPoint.position.z, testPoint.position.z);
+        o2->clear();
+        o2->insert(p, pointsToProcess, &agent);
+
+        testPoint = Point();
+        o2->visit(&visitorThreaded);
+        ASSERT_FLOAT_EQ(controlPoint.mass, testPoint.mass);
+        ASSERT_FLOAT_EQ(controlPoint.position.x, testPoint.position.x);
+        ASSERT_FLOAT_EQ(controlPoint.position.y, testPoint.position.y);
+        ASSERT_FLOAT_EQ(controlPoint.position.z, testPoint.position.z);
+        delete o2;
+        o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, i+1);
+        o2->insert(p, pointsToProcess, &agent);
+    }
+}
+
+TEST_F (OctreeTests, VisitWithBreaksThreadsFrom1To16Test) {
+
+    unsigned int pointsToProcess = std::min(points, (unsigned int)200);
+
+    o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
+
+    Point *p = new Point[pointsToProcess];
+    OctreePointAgent agent;
+    OctreePointVisitorWithBreak visitor;
+    OctreePointVisitorThreadedWithBreak visitorThreaded;
+
+    visitor.breakThreshold = 0.001;
+    visitorThreaded.breakThreshold = 0.001;
+
+    std::fstream outputFile;
+    outputFile.open("test.txt", std::ios::in | std::ios::binary);
+    outputFile.read((char *) p, pointsToProcess * sizeof(Point));
+    outputFile.close();
+
+    o->insert(p, pointsToProcess, &agent);
+    o->visit(&visitor);
+
+    auto controlPoint = testPoint;
+
+    o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100);
+    o2->insert(p, pointsToProcess, &agent);
+    testPoint = Point();
+    o2->visit(&visitorThreaded);
+    ASSERT_FLOAT_EQ(controlPoint.mass, testPoint.mass);
+    ASSERT_FLOAT_EQ(controlPoint.position.x, testPoint.position.x);
+    ASSERT_FLOAT_EQ(controlPoint.position.y, testPoint.position.y);
+    ASSERT_FLOAT_EQ(controlPoint.position.z, testPoint.position.z);
+    delete o2;
+
+    o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, 1);
+    o2->insert(p, pointsToProcess, &agent);
+    for (int i = 1; i <=16 ; ++i) {
+        testPoint = Point();
+        o2->visit(&visitor);
+        ASSERT_FLOAT_EQ(controlPoint.mass, testPoint.mass);
+        ASSERT_FLOAT_EQ(controlPoint.position.x, testPoint.position.x);
+        ASSERT_FLOAT_EQ(controlPoint.position.y, testPoint.position.y);
+        ASSERT_FLOAT_EQ(controlPoint.position.z, testPoint.position.z);
+        o2->clear();
+        o2->insert(p, pointsToProcess, &agent);
+
+        testPoint = Point();
+        o2->visit(&visitorThreaded);
+        ASSERT_FLOAT_EQ(controlPoint.mass, testPoint.mass);
+        ASSERT_FLOAT_EQ(controlPoint.position.x, testPoint.position.x);
+        ASSERT_FLOAT_EQ(controlPoint.position.y, testPoint.position.y);
+        ASSERT_FLOAT_EQ(controlPoint.position.z, testPoint.position.z);
+        delete o2;
+        o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, i+1);
+        o2->insert(p, pointsToProcess, &agent);
+    }
 }
 
 TEST_F (OctreeTests, PerformanceSparseInsertTests) {
