@@ -32,6 +32,7 @@
 #include <numeric>
 #include <type_traits>
 #include <functional>
+#include <atomic>
 
 namespace AKOctree {
 
@@ -270,7 +271,7 @@ namespace AKOctree {
         Precision radius = Precision(10);
 
         const unsigned int maxItemsPerCell = 1;
-        unsigned int itemsCount = 0;
+        std::atomic_uint itemsCount;
 
         unsigned int threadsNumber = 1;
         std::mutex threadsMutex;
@@ -508,7 +509,7 @@ namespace AKOctree {
 
         template<class T, class L>
         struct equality<T, L, true> {
-            static inline bool isEqual(T t, L l) {return t == l && *t == *l;}
+            static inline bool isEqual(T t, L l) {return t == l || *t == *l;}
         };
 
         template<class T, class Arg>
@@ -523,8 +524,8 @@ namespace AKOctree {
 
     template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     bool OctreeCell<L, N, P>::insertIntoLeaf(const L *item, const OctreeAgent<L, N, P> *agent) {
-        for (unsigned int i = 0; i < data.size(); ++i) {
-            if (sfinae::pointer_equality<const L*, const L*>::isEqual(item, data[i])) {
+        for(auto& d : data) {
+            if (sfinae::pointer_equality<const L*, const L*>::isEqual(item, d)) {
                 return false;
             }
         }
@@ -639,19 +640,20 @@ namespace AKOctree {
             this->threadsNumber = std::thread::hardware_concurrency();
         }
         root = std::make_shared<OctreeCell<L, N, P> >(maxItemsPerCell, center, radius);
+        itemsCount.store(0);
     }
 
     template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::clear() {
         root = std::make_shared<OctreeCell<L, N, P> >(maxItemsPerCell, center, radius);
-        itemsCount = 0;
+        itemsCount.store(0);
     }
 
     template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
     void Octree<L, N, P>::insert(const L *item, const OctreeAgent<L, N, P> *agent) {
         if (agent->isItemOverlappingCell(item, center, radius)) {
             if(root->insert(item, agent)) {
-                itemsCount++;
+                itemsCount.fetch_add(1);
             }
         }
     }
@@ -774,7 +776,7 @@ namespace AKOctree {
             for (unsigned int i = 0; i < items.size(); ++i) {
                 if (agentInsert->isItemOverlappingCell(&items[i], center, radius)) {
                     if(root->insert(&items[i], agentInsert)) {
-                        this->itemsCount++;
+                        this->itemsCount.fetch_add(1);
                     }
                 }
             }
@@ -948,7 +950,7 @@ namespace AKOctree {
                 auto item = itemsToAdd[itemsToAdd.size() - 1];
                 tempItems.push_back(item);
                 itemsToAdd.pop_back();
-                this->itemsCount++;
+                this->itemsCount.fetch_add(1);
             }
             threadsMutex.unlock();
             for (unsigned int i = 0; i < tempItems.size(); ++i) {

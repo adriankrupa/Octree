@@ -11,14 +11,23 @@ using namespace AKOctree;
 struct Point {
     glm::dvec3 position;
     double mass;
-    inline bool operator == (const Point &b) const
+};
+
+struct PointEquality {
+    glm::dvec3 position;
+    double mass;
+    inline bool operator == (const PointEquality &b) const
     {
-        return true;
+        return (fabs(position.x - b.position.x) < 0.00001) &&
+                (fabs(position.y - b.position.y) < 0.00001) &&
+                (fabs(position.z - b.position.z) < 0.00001) &&
+                (fabs(mass - b.mass) < 0.00001);
     }
 };
 
 unsigned int points = POINTS;
 Point testPoint;
+PointEquality testPointEquality;
 
 class OctreePointAgent : public OctreeAgent<Point, Point, double> {
 
@@ -34,6 +43,22 @@ public:
     }
         return true;
   }
+};
+
+class OctreePointEqualityAgent : public OctreeAgent<PointEquality, PointEquality, double> {
+
+public:
+    virtual bool isItemOverlappingCell(const PointEquality *item,
+                                       const OctreeVec3<double> &cellCenter,
+                                       const double &cellRadius) const override {
+
+        if (glm::abs(item->position.x - cellCenter.x) > cellRadius ||
+                glm::abs(item->position.y - cellCenter.y) > cellRadius ||
+                glm::abs(item->position.z - cellCenter.z) > cellRadius) {
+            return false;
+        }
+        return true;
+    }
 };
 
 class OctreePointAgentAdjust : public OctreeAgent<Point, Point, double>, public OctreeAgentAutoAdjustExtension<Point, Point, double> {
@@ -366,6 +391,42 @@ TEST_F (OctreeTests, GetItemsDuplicateCountTest) {
     o->insert(&p[4], &agent);
     ASSERT_EQ(5, o->getItemsCount());
 
+    delete []p;
+}
+
+TEST_F (OctreeTests, GetItemsDuplicateCountEqualityCaseTest) {
+    o = new Octree<Point, Point, double>(2);
+    auto oEquality = new Octree<PointEquality, PointEquality, double>(2);
+    OctreePointAgent agent;
+    OctreePointEqualityAgent agentEquality;
+    Point *p = new Point[6];
+    PointEquality *pe = new PointEquality[6];
+
+    for (int i = 0; i < 6; ++i) {
+        if(i==0) {
+            p[i].position = glm::vec3(i+1,1,1);
+            pe[i].position = glm::vec3(i+1,1,1);
+            p[i+1].position = glm::vec3(i+1,1,1);
+            pe[i+1].position = glm::vec3(i+1,1,1);
+
+            o->insert(&p[i], &agent);
+            oEquality->insert(&pe[i], &agentEquality);
+            o->insert(&p[i+1], &agent);
+            oEquality->insert(&pe[i+1], &agentEquality);
+            ++i;
+        } else {
+            p[i].position = glm::vec3(i+1,1,1);
+            pe[i].position = glm::vec3(i+1,1,1);
+
+            o->insert(&p[i], &agent);
+            oEquality->insert(&pe[i], &agentEquality);
+        }
+    }
+
+    ASSERT_EQ(6, o->getItemsCount());
+    ASSERT_EQ(5, oEquality->getItemsCount());
+
+    delete oEquality;
     delete []p;
 }
 
