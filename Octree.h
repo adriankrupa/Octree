@@ -28,6 +28,7 @@
 #include <thread>
 #include <numeric>
 #include <atomic>
+#include <mutex>
 
 namespace AKOctree {
 
