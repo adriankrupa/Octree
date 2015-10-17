@@ -24,14 +24,9 @@
 #ifndef __AKOctree__Octree__
 #define __AKOctree__Octree__
 
-#include <vector>
 #include <array>
-#include <algorithm>
 #include <thread>
-#include <mutex>
 #include <numeric>
-#include <type_traits>
-#include <functional>
 #include <atomic>
 
 namespace AKOctree {
@@ -196,7 +191,7 @@ namespace AKOctree {
 
         const unsigned int maxItemsPerCell;
         OctreeVec3<Precision> center = OctreeVec3<Precision>();
-        Precision radius = 0.0f;
+        Precision radius = Precision(0);
         OctreeCellType cellType;
         const unsigned int cellIndex;
         OctreeCellType internalCellType;
@@ -248,8 +243,6 @@ namespace AKOctree {
 
         template <class T>
         void insert(std::vector<LeafDataType> &items, const T *agent);
-        void update(const OctreeAgent<LeafDataType, NodeDataType, Precision> *agent);
-        void update(const OctreeAgentAutoAdjustExtension<LeafDataType, NodeDataType, Precision> *agent);
         std::string getItemPath(LeafDataType *item) const;
         std::string getStringRepresentation() const { return root->getStringRepresentation(0); }
         void printTreeData(OctreeNodeDataPrinter<LeafDataType, NodeDataType, Precision> *printer) const {  root->printTreeAndSubtreeData(0, printer); }
@@ -447,6 +440,30 @@ namespace AKOctree {
 
     template<class P>
     OctreeVec3<P> getCenterDelta(int index, P halfRadius) {
+        /*
+           y
+           |
+           +--x
+          /
+         z
+             0----1
+            /|   /|
+           2-+--3 |
+           | 4--+-5
+           |/   |/
+           6----7
+
+           000---001
+           /|    /|
+          / |   / |
+        010-+-011 |
+         | 100-+-101
+         | /   | /
+         |/    |/
+        110---111
+         */
+
+
         bool up = index < 4;//+y
         bool right = (bool) (index & 1);//+x
         bool front = (bool) (index & 2); //+z
@@ -492,6 +509,7 @@ namespace AKOctree {
         }
     }
 
+    // https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error
     namespace sfinae {
         template<class>
         struct sfinae_true : std::true_type {};
@@ -745,9 +763,9 @@ namespace AKOctree {
             OctreeVec3<P> max = center + OctreeVec3<P>(radius);
             OctreeVec3<P> min = center - OctreeVec3<P>(radius);
 
-            for (unsigned int i = 0; i < items.size(); ++i) {
-                max = agentAdjust->GetMaxValuesForAutoAdjust(&items[i], max);
-                min = agentAdjust->GetMinValuesForAutoAdjust(&items[i], min);
+            for (auto& item : items) {
+                max = agentAdjust->GetMaxValuesForAutoAdjust(&item, max);
+                min = agentAdjust->GetMinValuesForAutoAdjust(&item, min);
             }
             center = (max + min) / P(2);
             radius = std::max(std::abs(center.x - max.x), std::abs(center.y - max.y));
@@ -909,8 +927,8 @@ namespace AKOctree {
                         threads.push_back(std::thread(&Octree::visitThread, this, std::ref(visitor), std::ref(roots), std::ref(toVisit[i])));
                     }
 
-                    for (unsigned int i = 0; i < threads.size(); ++i) {
-                        threads[i].join();
+                    for (auto& thread : threads) {
+                        thread.join();
                     }
                     threads.clear();
 
@@ -953,8 +971,7 @@ namespace AKOctree {
                 this->itemsCount.fetch_add(1);
             }
             threadsMutex.unlock();
-            for (unsigned int i = 0; i < tempItems.size(); ++i) {
-                auto item = tempItems[i];
+            for(auto& item : tempItems) {
                 if (agent->isItemOverlappingCell(item, center, radius)) {
                     if(root -> isLeaf()) {
                         root->getMutex().lock();
@@ -975,7 +992,7 @@ namespace AKOctree {
 
         for(auto& index : toVisit) {
             int rootIndex = index / 8;
-            int cellIndex = index - rootIndex * 8;
+            int cellIndex = index % 8;
 
             if (!threadRoots[rootIndex]->isLeaf()) {
                 auto childs = threadRoots[rootIndex]->getChilds();
