@@ -167,6 +167,7 @@ namespace AKOctree {
         NodeDataType& getNodeData() const;
         unsigned int getCellIndex() const { return cellIndex; }
         Precision getRadius() const { return radius; }
+        OctreeVec3<Precision> getCellCenter() const { return center; }
 
     private:
 
