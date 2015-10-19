@@ -12,6 +12,7 @@ matrix:
             - ['g++-4.8']
             - ['libglm-dev']
       env: CXX=g++-4.8
+      before_install: CXX=g++-4.8
       script:
         - make clear test run POINTS=1000000 REGEX=NO_REGEX
 
@@ -24,6 +25,8 @@ matrix:
             - ['g++-4.9']
             - ['libglm-dev']
       env: CXX=g++-4.9
+      before_install:
+        - CXX=g++-4.9
 
     - os: linux
       compiler: g++-5
@@ -34,6 +37,8 @@ matrix:
             - ['g++-5']
             - ['libglm-dev']
       env: CXX=g++-5
+      before_install:
+        - CXX=g++-5
 
     - os: linux
       compiler: g++-5
@@ -44,6 +49,8 @@ matrix:
             - ['g++-5']
             - ['libglm-dev']
       env: CXX=g++-5 V="Release"
+      before_install:
+        - CXX=g++-5
       script:
         - make clear testR run POINTS=1000000
 
@@ -59,6 +66,7 @@ matrix:
             - ['lcov']
       env: CXX=g++-5 V='Code coverage'
       before_install:
+        - CXX=g++-5
         - alias gcov=gcov-5
         - pip install --user requests[security]
         - pip install --user cpp-coveralls
@@ -77,6 +85,7 @@ matrix:
             - ['libglm-dev']
             - ['valgrind']
       env: CXX=g++-5 V='Valgrind'
+      before_install: CXX=g++-5
       script:
         - make clear test valgrind POINTS=1000
 
@@ -89,6 +98,7 @@ matrix:
             - ['clang-3.5']
             - ['libglm-dev']
       env: CXX=clang++-3.5
+      before_install: CXX=clang++-3.5
       script:
         - make clear test run POINTS=1000000 REGEX=NO_REGEX
 
@@ -101,6 +111,7 @@ matrix:
             - ['clang-3.6']
             - ['libglm-dev']
       env: CXX=clang++-3.6
+      before_install: CXX=clang++-3.6
 
     - os: linux
       compiler: clang++-3.7
@@ -111,6 +122,7 @@ matrix:
             - ['clang-3.7']
             - ['libglm-dev']
       env: CXX=clang++-3.7
+      before_install: CXX=clang++-3.7
 
     - os: osx
       compiler: clang++
