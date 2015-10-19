@@ -408,6 +408,10 @@ TEST_F (OctreeTests, GetItemsDuplicateCountEqualityCaseTest) {
             pe[i].position = glm::vec3(i+1,1,1);
             p[i+1].position = glm::vec3(i+1,1,1);
             pe[i+1].position = glm::vec3(i+1,1,1);
+            p[i].mass = 1.0f;
+            pe[i].mass = 1.0f;
+            p[i+1].mass = 1.0f;
+            pe[i+1].mass = 1.0f;
 
             o->insert(&p[i], &agent);
             oEquality->insert(&pe[i], &agentEquality);
@@ -417,6 +421,8 @@ TEST_F (OctreeTests, GetItemsDuplicateCountEqualityCaseTest) {
         } else {
             p[i].position = glm::vec3(i+1,1,1);
             pe[i].position = glm::vec3(i+1,1,1);
+            p[i].mass = 1.0f;
+            pe[i].mass = 1.0f;
 
             o->insert(&p[i], &agent);
             oEquality->insert(&pe[i], &agentEquality);
@@ -1114,6 +1120,8 @@ TEST_F (OctreeTests, InsertThreadsFrom1To16Test) {
         delete o;
         o = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, i+1);
     }
+
+    delete []p;
 }
 
 
@@ -1170,6 +1178,8 @@ TEST_F (OctreeTests, VisitThreadsFrom1To16Test) {
         o2 = new Octree<Point, Point, double>(8, OctreeVec3<double>(0), 100, i+1);
         o2->insert(p, pointsToProcess, &agent);
     }
+
+    delete []p;
 }
 
 TEST_F (OctreeTests, VisitWithBreaksThreadsFrom1To16Test) {
