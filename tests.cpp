@@ -428,6 +428,7 @@ TEST_F (OctreeTests, GetItemsDuplicateCountEqualityCaseTest) {
 
     delete oEquality;
     delete []p;
+    delete []pe;
 }
 
 TEST_F (OctreeTests, Insert5PointsReverse) {
