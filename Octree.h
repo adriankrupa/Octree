@@ -341,7 +341,7 @@ namespace AKOctree {
         visitPostRoot(rootCell);
     }
 
-    std::array<bool, 8> getArrayOfChildsToProcess() {
+    inline std::array<bool, 8> getArrayOfChildsToProcess() {
         std::array<bool, 8> a;
         a.fill(true);
         return a;
@@ -839,12 +839,6 @@ namespace AKOctree {
             //printf("WARNING: visiting with multiple tree requires OctreeVisitorThreaded\nUsing 1 thread\n");
         }
         visitor->visitRoot(root);
-    }
-
-    void pushRangeIntoVector(std::vector<int>& v, int from, int to) {
-        for (int i = from; i < to; ++i) {
-            v.push_back(i);
-        }
     }
 
     template<class L, class N, class P> //L=LeafDataType N=NodeDataType P=Precision
